@@ -26,6 +26,7 @@ Images and annotations in COCO JSON.
 
 ## Example notebooks
 
-A google colab notebook demonstrating use of a detectron2 model for segmentation can be viewed at:
-https://colab.research.google.com/github/Sydney-Informatics-Hub/aerial-segmentation/blob/main/notebooks/detectron2_fine_tuning.ipynb
+Jupyter notebooks demonstrating use of a detectron2 model for segmentation are in the `notebooks` dir.
+
+The google colab notebook can be run [here](https://colab.research.google.com/github/Sydney-Informatics-Hub/aerial-segmentation/blob/main/notebooks/detectron2_fine_tuning.ipynb)
 
