@@ -23,3 +23,9 @@ Images and annotations in COCO JSON.
 ## Output Data Format
 
 Images and annotations in COCO JSON.
+
+## Example notebooks
+
+A google colab notebook demonstrating use of a detectron2 model for segmentation can be viewed at:
+https://colab.research.google.com/github/Sydney-Informatics-Hub/aerial-segmentation/blob/main/notebooks/detectron2_fine_tuning.ipynb
+
