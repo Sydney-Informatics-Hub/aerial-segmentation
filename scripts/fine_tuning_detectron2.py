@@ -3,6 +3,7 @@
 import argparse
 import os
 
+import wandb
 from detectron2.data.datasets import register_coco_instances
 from detectron2.utils.logger import setup_logger
 from roboflow import Roboflow
@@ -35,6 +36,24 @@ def create_parser():
     )
     roboflow_group.add_argument(
         "--roboflow-api-key", "-r", type=str, help="Roboflow API key.", required=True
+    )
+    wandb_group = parser.add_argument_group("Weights & Biases options")
+    wandb_group.add_argument(
+        "--use-wandb",
+        action="store_true",
+        help="Initialise Weights & Biases (wandb) for this run.",
+    )
+    wandb_group.add_argument(
+        "--wandb-project",
+        type=str,
+        default="gis-segmentation",
+        help="The name of the wandb project being sent the new run. (Default: %(default)s)",
+    )
+    wandb_group.add_argument(
+        "--wandb-entity",
+        type=str,
+        default="sih",
+        help="wandb username or team name to whose UI the run will be sent.",
     )
     return parser
 
@@ -116,6 +135,17 @@ def main(args=None):
     parser = create_parser()
     args = parser.parse_args(args)
 
+    # Shall we use wandb?
+    if args.use_wandb:
+        # For now just accept API keys from the TTY - but we may want to change this later
+        # so that it can run noninteractively.
+        wandb.login()
+        # There are loads of options to wandb.init, some of which we might like to expose
+        # further down the line - for now I'm just using the options from the colab notebook.
+        wandb.init(
+            project=args.wandb_project, entity=args.wandb_entity, sync_tensorboard=True
+        )
+
     # Download the roboflow dataset and register it in detectron2
     dataset = get_roboflow_dataset(
         args.roboflow_api_key,
@@ -128,6 +158,10 @@ def main(args=None):
     register_coco_json_from_roboflow(
         dataset.name, dataset.location, instance_type="train"
     )
+
+    # Shutdown wandb run if we were using it in this process.
+    if wandb.run is not None:
+        wandb.finish()
 
 
 if __name__ == "__main__":
