@@ -1,5 +1,6 @@
 import os
 import time
+import cv2
 import torch
 import torchvision
 import argparse
@@ -39,7 +40,7 @@ def main():
             output_path = os.path.join(args.output_dir, filename)
 
             start_time = time.time()
-            im = Image.open(input_path)
+            im = cv2.imread(input_path)
             annotated_im = segment_buildings(im, predictor)
             annotated_im.save(output_path)
             end_time = time.time()
