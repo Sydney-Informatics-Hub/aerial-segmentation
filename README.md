@@ -1,13 +1,7 @@
 # aerial-segmentation
 Open source aerial imagery segmentation model fine tuning, evaluation, and prediction tools. Part of https://github.com/Sydney-Informatics-Hub/PIPE-3956-aerial-segmentation
 
-<iframe
-	src="https://sih-building-segmentation.hf.space"
-	frameborder="0"
-	width="850"
-	height="450"
-></iframe>
-
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)]([https://huggingface.co/spaces/akhaliq/yolov7](https://huggingface.co/spaces/SIH/building-segmentation))
 
 ## Setup
 
