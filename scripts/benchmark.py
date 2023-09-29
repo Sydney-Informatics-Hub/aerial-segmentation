@@ -28,14 +28,14 @@ def main():
     cfg.merge_from_file(args.config_yaml)
     cfg.MODEL.WEIGHTS = args.model_weights
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.roi_score_thresh
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 8
+    # cfg.MODEL.ROI_HEADS.NUM_CLASSES = 8
     predictor = DefaultPredictor(cfg)
 
     os.makedirs(args.output_dir, exist_ok=True)
     iteration_times = []
 
     for filename in os.listdir(args.input_dir):
-        if filename.endswith(".jpg") or filename.endswith(".png"):
+        if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".tif"):
             input_path = os.path.join(args.input_dir, filename)
             output_path = os.path.join(args.output_dir, filename)
 
