@@ -3,3 +3,6 @@ roboflow
 torch
 torchvision
 wandb
+opencv-python
+pillow
+tqdm
