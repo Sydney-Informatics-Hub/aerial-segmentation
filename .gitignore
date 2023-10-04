@@ -160,3 +160,8 @@ cython_debug/
 #.idea/
 .DS_Store
 weights/chatswood_buildings_poc.pth
+weights/*
+.DS_Store
+output_data/*
+detectron2/*
+detectron2
