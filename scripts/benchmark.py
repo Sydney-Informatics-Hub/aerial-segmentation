@@ -1,3 +1,7 @@
+"""
+Example Use:
+python scripts/benchmark.py --input-dir demo_data --output-dir output_data --config-yaml weights/poc_cfg.yaml --model-weights weights/model_final.pth --roi-score-thresh 0.2
+"""
 import os
 import time
 import cv2
