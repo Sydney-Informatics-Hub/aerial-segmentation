@@ -161,3 +161,4 @@ cython_debug/
 weights/*
 .DS_Store
 output_data/*
+detectron2/*
