@@ -162,3 +162,4 @@ weights/*
 .DS_Store
 output_data/*
 detectron2/*
+detectron2
