@@ -55,7 +55,7 @@ inputs = gr.inputs.Image(type="pil", label="Input Image")
 outputs = gr.outputs.Image(type="pil", label="Output Image")
 
 title = "Building Segmentation"
-description = "An instance segmentation demo for identifying boundaries of buildings in aerial images using DETR (End-to-End Object Detection) model with MaskRCNN-101 backbone"
+description = "An instance segmentation demo for identifying boundaries of buildings in aerial images using DETR (End-to-End Object Detection) model with MaskRCNN-101 backbone."
 
 # Create user interface and launch
 gr.Interface(segment_buildings, 
