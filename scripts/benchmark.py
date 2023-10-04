@@ -29,6 +29,7 @@ def main():
     cfg.MODEL.WEIGHTS = args.model_weights
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.roi_score_thresh
     # cfg.MODEL.ROI_HEADS.NUM_CLASSES = 8
+    cfg.MODEL.DEVICE = "cpu" 
     predictor = DefaultPredictor(cfg)
 
     os.makedirs(args.output_dir, exist_ok=True)
