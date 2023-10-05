@@ -72,6 +72,7 @@ def extract_output_annotations(output, flatten: bool = False):
         mask_arrays.append(mask_array_instance)
         # img = np.where(mask_array_instance[i] == True, 255, img)
         polygon = sv.mask_to_polygons(mask_array_instance)[0]
+
         if flatten:
             polygons.append(polygon.flatten().tolist())
         else:
@@ -80,17 +81,13 @@ def extract_output_annotations(output, flatten: bool = False):
     return mask_arrays, polygons, bbox, labels
 
 
-def extract_tile_annotations_df(
-    image_path, image_id, predictor, threshold: float = 0.5
-):
+def extract_tile_annotations_df(image_path, image_id, predictor):
     """Reads through tiles, predicts, and extracts annnotations as a dataframe.
 
     Args:
         image_path (str): path to the tile png file
         image_id (int): an id for the image tile. Usually a unique int
         predictor: Detectron2 predictor object
-
-    #TODO: Implement thresholding
     """
     image = cv2.imread(image_path)
     output = predictor(image)
@@ -102,7 +99,7 @@ def extract_tile_annotations_df(
     return annotations
 
 
-def extract_all_annotations_df(images_list: list, predictor, threshold: float = 0.5):
+def extract_all_annotations_df(images_list: list, predictor):
     """Extract and combine tile annotations into a single dataframe.
 
     Args:
@@ -113,9 +110,7 @@ def extract_all_annotations_df(images_list: list, predictor, threshold: float = 
     all_annotations = []
     for image_index, image in tqdm(enumerate(images_list), total=len(images_list)):
         all_annotations.append(
-            extract_tile_annotations_df(
-                image, image_index, predictor, threshold=threshold
-            )
+            extract_tile_annotations_df(image, image_index, predictor)
         )
 
     all_annotations = pd.concat(all_annotations)

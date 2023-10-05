@@ -84,6 +84,7 @@ def main(args=None):
     weights_file = args.weights
     cfg.merge_from_file(config_file)
     cfg.MODEL.WEIGHTS = weights_file
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.threshold
 
     # If we have the COCO JSON then we can set up the class names for the prediction.
     if args.coco is not None:
@@ -108,9 +109,7 @@ def main(args=None):
 
     predictor = DefaultPredictor(cfg)
 
-    all_annotations = extract_all_annotations_df(
-        images, predictor
-    )  # , threshold=args.threshold)
+    all_annotations = extract_all_annotations_df(images, predictor)
     coco_json = assemble_coco_json(
         all_annotations, images, license="", info="", type="instances"
     )
