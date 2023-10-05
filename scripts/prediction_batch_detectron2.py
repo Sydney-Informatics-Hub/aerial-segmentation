@@ -118,7 +118,7 @@ def main(args=None):
         args.coco_out = os.path.join(args.indir, "coco-out.json")
 
     with open(args.coco_out, "w") as f:
-        json.dump(coco_json, f)
+        json.dump(coco_json.toJSON(), f)
 
 
 if __name__ == "__main__":
