@@ -53,6 +53,13 @@ def create_parser():
         help="Detection threshold. Default: %(default)s.",
     )
     parser.add_argument(
+        "--simplify-tolerance",
+        "-s",
+        type=float,
+        default=0.2,
+        help="Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Default: %(default)s.",
+    )
+    parser.add_argument(
         "--coco",
         type=str,
         default=None,
@@ -109,12 +116,16 @@ def main(args=None):
 
     predictor = DefaultPredictor(cfg)
 
-    all_annotations = extract_all_annotations_df(images, predictor)
+    all_annotations = extract_all_annotations_df(
+        images, predictor, simplify_tolerance=args.simplify_tolerance
+    )
     coco_json = assemble_coco_json(
         all_annotations, images, license="", info="", type="instances"
     )
     if args.coco_out is None:
-        args.coco_out = os.path.join(args.indir, "coco-out.json")
+        args.coco_out = os.path.join(
+            args.indir, f"coco-out-tol_{str(args.simplify_tolerance)}.json"
+        )
 
     with open(args.coco_out, "w") as f:
         json.dump(coco_json.toJSON(), f)
