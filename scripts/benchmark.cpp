@@ -154,7 +154,7 @@ Usage:
     c10::cuda::getCurrentCUDAStream().synchronize();
 
   // run 3 more times to benchmark
-  int N_benchmark = 3, N_warmup = 1;
+  int N_benchmark = 9, N_warmup = 1;
   auto start_time = chrono::high_resolution_clock::now();
   for (int i = 0; i < N_benchmark + N_warmup; ++i) {
     if (i == N_warmup)
