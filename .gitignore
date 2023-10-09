@@ -160,7 +160,12 @@ cython_debug/
 #.idea/
 
 notebooks/gis-hd-200x200-3/
-
 notebooks/output/
-
 notebooks/wandb/
+
+weights/*
+.DS_Store
+output_data/*
+detectron2/*
+detectron2
+
