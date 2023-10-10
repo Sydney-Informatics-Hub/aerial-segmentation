@@ -89,17 +89,23 @@ python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/con
 For more information about the script, you may run:
 
 ```bash
-python scripts.prediction_batch_detectron2  --help
+python -m scripts.prediction_batch_detectron2  --help
 
 ```
 
 For prediction and visualisation on a single image, you can use the following script:
 
 ```bash
-python -m scripts.scripts/prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
+python -m scripts.prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
 
 ```
 
+For more information about the script, you may run:
+
+```bash
+python -m scripts.prediction_detectron2  --help
+
+```
 
 ## Contributing to the Project
 
