@@ -92,3 +92,28 @@ pre-commit install
 ```
 
 this will run the pre-commit hooks every time you commit changes to the repository.
+
+## Deploy benchmark script to Jetson Nano
+
+There is a Docker image available with a GPU enabled version of PyTorch, and Detectron2 compiled using
+Python 3.8 on a Jetson Nano which can be used to deploy scripts on these devices. The image can be retrieved
+to the local Docker repository on a Jetson Nano using:
+
+```
+sudo docker pull sydneyinformaticshub/aerialseg:det2-py38-jetson
+```
+
+In order to run the docker image first make sure the Jetson Nano has the lastest Nano compatible version of
+Jetpack installed. You will need at least 4.6 to run the image. Check
+[here](https://developer.nvidia.com/embedded/jetpack-archive) for a list of available
+Jetpack versions compatible with the Nano.
+
+Once jetpack is updated you can log into the docker image and mount the `aerial-segmentation` repository
+from the current directory inside it using:
+
+```
+sudo docker run -v ${PWD}/aerial-segmentation:/root/aerial-segmentation -it --runtime nvidia sydneyinformaticshub/aerialseg:det2-py38-jetson /bin/bash
+```
+
+The `sydneyinformaticshub/aerialseg:det2-py38-jetson` image can also be used as a base image to install
+further packages and scripts as required.
