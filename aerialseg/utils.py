@@ -108,21 +108,9 @@ def extract_output_annotations(
         # img = np.where(mask_array_instance[i] == True, 255, img)
         polygon_sv = sv.mask_to_polygons(mask_array_instance)
 
-        if len(polygon_sv) == 1:  # if there is only one polygon
-            polygon = polygon_sv[0]
-            polygon = polygon_prep(polygon, simplify_tolerance=simplify_tolerance)
-            mask_arrays.append(mask_array_instance)
-            labels_list.append(labels[i])
-            bbox_list.append(bbox[i])
-
-            if flatten:
-                polygons.append(polygon.flatten().tolist())
-            else:
-                polygons.append(polygon.tolist())
-
-        elif len(polygon_sv) > 1:  # if there are multiple polygons
-            for p in polygon_sv:
-                polygon = polygon_prep(p, simplify_tolerance=simplify_tolerance)
+        if len(polygon_sv) > 0:  # if there is at least one polygon
+            for polygon in polygon_sv:
+                polygon = polygon_prep(polygon, simplify_tolerance=simplify_tolerance)
                 mask_arrays.append(mask_array_instance)
                 labels_list.append(labels[i])
                 bbox_list.append(bbox[i])
