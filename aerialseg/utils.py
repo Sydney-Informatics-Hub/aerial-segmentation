@@ -183,7 +183,12 @@ def extract_all_annotations_df(
 
 
 def assemble_coco_json(
-    annotations, images, license: str = "", info: str = "", type: str = "instances"
+    annotations,
+    images,
+    categories: dict = None,
+    license: str = "",
+    info: str = "",
+    type: str = "instances",
 ):
     """Generate a coco json object.
 
@@ -205,9 +210,19 @@ def assemble_coco_json(
     coco_json.license = license
     coco_json.type = type
     coco_json.info = info
-    coco_json.categories = [
-        coco.make_category(class_name=str(cat), class_id=cat)
-        for cat in annotations.groupby("class_id").groups.keys()
-    ]
+    if categories is not None:
+        coco_json.categories = [
+            coco.make_category(
+                class_name=str(categories[cat]["name"]),
+                class_id=cat,
+                supercategory=categories[cat]["supercategory"],
+            )
+            for cat in annotations.groupby("class_id").groups.keys()
+        ]
+    else:
+        coco_json.categories = [
+            coco.make_category(class_name=str(cat), class_id=cat)
+            for cat in annotations.groupby("class_id").groups.keys()
+        ]
 
     return coco_json

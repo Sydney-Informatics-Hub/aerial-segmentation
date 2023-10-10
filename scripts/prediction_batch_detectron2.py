@@ -7,7 +7,8 @@ import json
 import os
 
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
+
+# from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
 
 from aerialseg.utils import assemble_coco_json, extract_all_annotations_df
@@ -98,9 +99,15 @@ def main(args=None):
         with open(args.coco, "r") as f:
             coco = json.load(f)
         categories = coco["categories"]
-        thing_classes = [c["name"] for c in categories]
-        meta = MetadataCatalog.get("predict")
-        meta.thing_classes = thing_classes
+        categories_keyed = {
+            c["id"]: {"name": c["name"], "supercategory": c["supercategory"]}
+            for c in categories
+        }
+        # thing_classes = [c["name"] for c in categories] # These 3 steps are not required for inference if not visualising
+        # meta = MetadataCatalog.get("predict")
+        # meta.thing_classes = thing_classes
+    else:
+        categories_keyed = None
 
     # scan the input directory for images based on the pattern given
     images = glob.glob(os.path.join(args.indir, args.in_pattern))
@@ -111,8 +118,6 @@ def main(args=None):
     # If not many images are given, this should be okay to go with CPU inference.
     if args.force_cpu:
         cfg.MODEL.DEVICE = "cpu"
-    else:
-        args.n_jobs = 1  # force to 1 job if using GPU
 
     predictor = DefaultPredictor(cfg)
 
@@ -120,7 +125,12 @@ def main(args=None):
         images, predictor, simplify_tolerance=args.simplify_tolerance
     )
     coco_json = assemble_coco_json(
-        all_annotations, images, license="", info="", type="instances"
+        all_annotations,
+        images,
+        categories=categories_keyed,
+        license="",
+        info="",
+        type="instances",
     )
     if args.coco_out is None:
         args.coco_out = os.path.join(
