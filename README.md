@@ -70,6 +70,42 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 ``` -->
 
+## Usage
+
+### Fine-tuning
+
+TBC
+
+### Prediction
+
+The following code snippet can be used to predict on a directory of tiles (batch prediction):
+
+
+```bash
+python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  threshold 0.7 --force-cpu 
+
+```
+
+For more information about the script, you may run:
+
+```bash
+python -m scripts.prediction_batch_detectron2  --help
+
+```
+
+For prediction and visualisation on a single image, you can use the following script:
+
+```bash
+python -m scripts.prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
+
+```
+
+For more information about the script, you may run:
+
+```bash
+python -m scripts.prediction_detectron2  --help
+
+```
 
 ## Contributing to the Project
 
