@@ -57,8 +57,14 @@ def create_parser():
         "--simplify-tolerance",
         "-s",
         type=float,
-        default=0.2,
+        default=0.9,
         help="Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--minimum-rotated-rectangle",
+        "-m",
+        action=argparse.BooleanOptionalAction,
+        help="If set, will return the minimum rotated rectangle of the polygons.",
     )
     parser.add_argument(
         "--coco",
@@ -82,14 +88,23 @@ def create_parser():
 
     return parser
 
+    # Debugging toy inputs:
+    # config_file = "tests/data/config.yml"
+    # weights_file = "tests/data/model_final.pth"
+    # images = glob.glob(os.path.join("/home/sahand/Data/GIS2COCO/chatswood/big_tiles_200_b/", "*.png"))
+    # coco = "/home/sahand/Data/GIS2COCO/chatswood/big_tiles_200_b/coco_from_gis_hd_200.json"
+    # out = "/home/sahand/Data/GIS2COCO/chatswood/big_tiles_200_b/coco-out-tol_0.9-b.json"
+    # out = "/home/sahand/Data/GIS2COCO/chatswood/big_tiles_200_b/coco-out-mrr.json"
+
 
 def main(args=None):
     parser = create_parser()
     args = parser.parse_args()
-    cfg = get_cfg()
 
     config_file = args.config
     weights_file = args.weights
+
+    cfg = get_cfg()
     cfg.merge_from_file(config_file)
     cfg.MODEL.WEIGHTS = weights_file
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.threshold
@@ -122,7 +137,10 @@ def main(args=None):
     predictor = DefaultPredictor(cfg)
 
     all_annotations = extract_all_annotations_df(
-        images, predictor, simplify_tolerance=args.simplify_tolerance
+        images,
+        predictor,
+        simplify_tolerance=args.simplify_tolerance,
+        minimum_rotated_rectangle=args.minimum_rotated_rectangle,
     )
     coco_json = assemble_coco_json(
         all_annotations,
@@ -133,12 +151,15 @@ def main(args=None):
         type="instances",
     )
     if args.coco_out is None:
-        args.coco_out = os.path.join(
-            args.indir, f"coco-out-tol_{str(args.simplify_tolerance)}.json"
-        )
+        if args.minimum_rotated_rectangle:
+            out = os.path.join(args.indir, "coco-out-mrr.json")
+        else:
+            args.coco_out = os.path.join(
+                args.indir, f"coco-out-tol_{str(args.simplify_tolerance)}.json"
+            )
 
-    with open(args.coco_out, "w") as f:
-        json.dump(coco_json.toJSON(), f)
+    with open(out, "w") as f:
+        f.write(coco_json.toJSON())
 
 
 if __name__ == "__main__":

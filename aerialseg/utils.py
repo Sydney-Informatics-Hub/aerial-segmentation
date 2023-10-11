@@ -49,12 +49,15 @@ def save_images_as_gif(input_folder, output_gif_path, duration=100):
     )
 
 
-def polygon_prep(polygon, simplify_tolerance: float = 0.0):
+def polygon_prep(
+    polygon, simplify_tolerance: float = 0.0, minimum_rotated_rectangle: bool = False
+):
     """Prepares a polygon for export.
 
     Args:
         polygon (list): A list of coordinates
-        simplify_tolerance (float, optional): Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Defaults to 0.0.
+        simplify_tolerance (float, optional): Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Defaults to 0.0. If simplify_tolerance > 0, will simplify the polygon, without minimum rotated rectangle.
+        minimum_rotated_rectangle (bool, optional): If true, will return the minimum rotated rectangle of the polygon. Defaults to False. If simplify_tolerance > 0, will simplify the polygon without minimum rotated rectangle.
 
     Returns:
         polygon (list): A list of coordinates
@@ -63,17 +66,22 @@ def polygon_prep(polygon, simplify_tolerance: float = 0.0):
         warnings.warn(
             f"The polygon has less than 3 points! This is not an actual polygon, and can be a line or point(s). Polygon: {polygon}."
         )
-
-    if simplify_tolerance > 0:
-        polygon = Polygon(polygon)
-        polygon = polygon.simplify(simplify_tolerance)
-        polygon = np.array(polygon.exterior.coords)
+    polygon = Polygon(polygon)
+    if minimum_rotated_rectangle:
+        polygon = polygon.minimum_rotated_rectangle
+    else:
+        if simplify_tolerance > 0:
+            polygon = polygon.simplify(simplify_tolerance)
+    polygon = np.array(polygon.exterior.coords)
 
     return polygon
 
 
 def extract_output_annotations(
-    output, flatten: bool = False, simplify_tolerance: float = 0.0
+    output,
+    flatten: bool = False,
+    simplify_tolerance: float = 0.0,
+    minimum_rotated_rectangle: bool = False,
 ):
     """Extracts polygons, bounding boxes, and binary masks from prediction
     ouputs.
@@ -82,6 +90,7 @@ def extract_output_annotations(
         output: Detectron2 prediction output
         flatten (bool): If true, will flatten polygons, as such used in coco segmentations.
         simplify_tolerance (float, optional): Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Defaults to 0.0.
+        minimum_rotated_rectangle (bool, optional): If true, will return the minimum rotated rectangle of the polygon. Defaults to False.
 
     Returns:
         mask_arrays (list): A list of binary masks
@@ -110,7 +119,11 @@ def extract_output_annotations(
 
         if len(polygon_sv) > 0:  # if there is at least one polygon
             for polygon in polygon_sv:
-                polygon = polygon_prep(polygon, simplify_tolerance=simplify_tolerance)
+                polygon = polygon_prep(
+                    polygon,
+                    simplify_tolerance=simplify_tolerance,
+                    minimum_rotated_rectangle=minimum_rotated_rectangle,
+                )
                 mask_arrays.append(mask_array_instance)
                 labels_list.append(labels[i])
                 bbox_list.append(bbox[i])
@@ -127,7 +140,11 @@ def extract_output_annotations(
 
 
 def extract_tile_annotations_df(
-    image_path, image_id, predictor, simplify_tolerance: float = 0.0
+    image_path,
+    image_id,
+    predictor,
+    simplify_tolerance: float = 0.0,
+    minimum_rotated_rectangle: bool = False,
 ):
     """Reads through tiles, predicts, and extracts annnotations as a dataframe.
 
@@ -136,6 +153,7 @@ def extract_tile_annotations_df(
         image_id (int): an id for the image tile. Usually a unique int
         predictor: Detectron2 predictor object
         simplify_tolerance (float, optional): Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Defaults to 0.0.
+        minimum_rotated_rectangle (bool, optional): If true, will return the minimum rotated rectangle of the polygon. Defaults to False.
 
     Returns:
         Pandas.DataFrame: A dataframe of annotations
@@ -143,7 +161,9 @@ def extract_tile_annotations_df(
     image = cv2.imread(image_path)
     output = predictor(image)
     _, polygons, _, labels = extract_output_annotations(
-        output, simplify_tolerance=simplify_tolerance
+        output,
+        simplify_tolerance=simplify_tolerance,
+        minimum_rotated_rectangle=minimum_rotated_rectangle,
     )
     annotations = pd.DataFrame(
         {"pixel_polygon": polygons, "image_id": image_id, "class_id": labels}
@@ -153,7 +173,10 @@ def extract_tile_annotations_df(
 
 
 def extract_all_annotations_df(
-    images_list: list, predictor, simplify_tolerance: float = 0.0
+    images_list: list,
+    predictor,
+    simplify_tolerance: float = 0.0,
+    minimum_rotated_rectangle: bool = False,
 ):
     """Extract and combine tile annotations into a single dataframe.
 
@@ -161,6 +184,7 @@ def extract_all_annotations_df(
         images_list (list): A list of image paths
         predictor: Detectron2 predictor object
         simplify_tolerance (float, optional): Tolerance for simplifying polygons. Accepts values between 0.0 and 1.0. Defaults to 0.0.
+        minimum_rotated_rectangle (bool, optional): If true, will return the minimum rotated rectangle of the polygon. Defaults to False.
 
     Returns:
         Pandas.DataFrame: A dataframe of annotations
@@ -170,7 +194,11 @@ def extract_all_annotations_df(
     for image_index, image in tqdm(enumerate(images_list), total=len(images_list)):
         all_annotations.append(
             extract_tile_annotations_df(
-                image, image_index, predictor, simplify_tolerance=simplify_tolerance
+                image,
+                image_index,
+                predictor,
+                simplify_tolerance=simplify_tolerance,
+                minimum_rotated_rectangle=minimum_rotated_rectangle,
             )
         )
 
