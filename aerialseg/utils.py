@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import supervision as sv
 from aerial_conversion import coco
+from detectron2.utils.visualizer import Visualizer
+from matplotlib import pylab as plt
 from PIL import Image
 from shapely.geometry import Polygon
 from tqdm import tqdm
@@ -226,3 +228,31 @@ def assemble_coco_json(
         ]
 
     return coco_json
+
+
+def visualize_or_save_image(image: str, predictor, meta=None, png_out: str = ""):
+    """Process an image for object instance detection, visualize the results,
+    and optionally save them as a PNG.
+
+    Args:
+        image (str): The input image file path.
+        predictor: The object instance detection model.
+        meta: The metadata catalog for the model.
+        png_out (str, optional): If provided, save the visualization as a PNG at this file path.
+
+    Returns:
+        None
+    """
+    im = cv2.imread(image)
+    # Could serialise the outputs to a file
+    outputs = predictor(im)
+    v = Visualizer(im[:, :, ::-1], metadata=meta)
+    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+
+    plt.figure(figsize=(8, 8), tight_layout=True)
+    plt.imshow(out.get_image())
+    plt.axis("off")
+    if png_out:
+        plt.savefig(png_out)
+    else:
+        plt.show()
