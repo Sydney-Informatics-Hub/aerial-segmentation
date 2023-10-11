@@ -230,7 +230,7 @@ def assemble_coco_json(
     return coco_json
 
 
-def visualize_or_save_image(image: str, predictor, meta, png_out: str = ""):
+def visualize_or_save_image(image: str, predictor, meta=None, png_out: str = ""):
     """Process an image for object instance detection, visualize the results,
     and optionally save them as a PNG.
 
