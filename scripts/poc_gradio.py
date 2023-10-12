@@ -8,9 +8,8 @@ import numpy as np
 from PIL import Image
 
 # import some common detectron2 utilities
-if (
-    os.system("pip install 'git+https://github.com/facebookresearch/detectron2.git'")
-    == 0
+if not os.system(
+    "pip install 'git+https://github.com/facebookresearch/detectron2.git'"
 ):
     from detectron2.config import get_cfg
     from detectron2.engine import DefaultPredictor
