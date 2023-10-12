@@ -152,15 +152,13 @@ def main(args=None):
     )
     if args.coco_out is None:
         if args.minimum_rotated_rectangle:
-            out = os.path.join(args.indir, "coco-out-mrr.json")
+            args.coco_out = os.path.join(args.indir, "coco-out-mrr.json")
         else:
-            out = os.path.join(
+            args.coco_out = os.path.join(
                 args.indir, f"coco-out-tol_{str(args.simplify_tolerance)}.json"
             )
-    else:
-        out = args.coco_out
 
-    coco_json.write_to_file(out)
+    coco_json.write_to_file(args.coco_out)
 
 
 if __name__ == "__main__":
