@@ -157,8 +157,10 @@ def main(args=None):
             out = os.path.join(
                 args.indir, f"coco-out-tol_{str(args.simplify_tolerance)}.json"
             )
+    else:
+        out = args.coco_out
 
-    f.write(coco_json.write_to_file(out))
+    coco_json.write_to_file(out)
 
 
 if __name__ == "__main__":
