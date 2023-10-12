@@ -82,7 +82,14 @@ The following code snippet can be used to predict on a directory of tiles (batch
 
 
 ```bash
-python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  threshold 0.7 --force-cpu 
+python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
+
+```
+
+For getting the minimum rotated rectangles in tile level, you can use the following script:
+
+```bash
+python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
 
 ```
 
