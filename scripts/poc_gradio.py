@@ -34,12 +34,23 @@ predictor = DefaultPredictor(cfg)
 
 def segment_buildings(im):
 
+    """
+    Segment buildings in an image using a pre-trained instance segmentation model.
+
+    Args:
+    im (PIL.Image): The input image to segment buildings from.
+
+    Returns:
+    PIL.Image: An image with buildings segmented and highlighted.
+    """
+
     im = np.array(im)
     outputs = predictor(im)
     v = Visualizer(im[:, :, ::-1],
                    scale=0.5,
                    instance_mode=ColorMode.IMAGE_BW
     )
+    # Print out information to appear in logs for diagnostics
     print(len(outputs["instances"])," buildings detected.")
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     
