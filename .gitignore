@@ -162,6 +162,8 @@ cython_debug/
 notebooks/gis-hd-200x200-3/
 notebooks/output/
 notebooks/wandb/
+.DS_Store
+weights/chatswood_buildings_poc.pth
 
 weights/*
 .DS_Store

@@ -6,3 +6,6 @@ wandb
 opencv-python
 pillow
 tqdm
+Sphinx
+sphinx_rtd_theme
+

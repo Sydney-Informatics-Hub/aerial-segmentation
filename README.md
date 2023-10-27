@@ -1,6 +1,6 @@
 # aerial-segmentation
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/SIH/building-segmentation)
 Open source aerial imagery segmentation model fine tuning, evaluation, and prediction tools. Part of https://github.com/Sydney-Informatics-Hub/PIPE-3956-aerial-segmentation
-
 
 ## Setup
 
@@ -70,6 +70,49 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 ``` -->
 
+## Usage
+
+### Fine-tuning
+
+TBC
+
+### Prediction
+
+The following code snippet can be used to predict on a directory of tiles (batch prediction):
+
+
+```bash
+python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
+
+```
+
+For getting the minimum rotated rectangles in tile level, you can use the following script:
+
+```bash
+python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
+
+```
+
+For more information about the script, you may run:
+
+```bash
+python -m scripts.prediction_batch_detectron2  --help
+
+```
+
+For prediction and visualisation on a single image, you can use the following script:
+
+```bash
+python -m scripts.prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
+
+```
+
+For more information about the script, you may run:
+
+```bash
+python -m scripts.prediction_detectron2  --help
+
+```
 
 ## Contributing to the Project
 
@@ -92,3 +135,28 @@ pre-commit install
 ```
 
 this will run the pre-commit hooks every time you commit changes to the repository.
+
+## Deploy benchmark script to Jetson Nano
+
+There is a Docker image available with a GPU enabled version of PyTorch and Detectron2 compiled on a
+Jetson Nano using Python 3.8. This can be used to deploy scripts from this repository on these devices.
+The image can be retrieved to the local Docker repository on a Jetson Nano using:
+
+```
+sudo docker pull sydneyinformaticshub/aerialseg:det2-py38-jetson
+```
+
+In order to run the Docker image first make sure the Jetson Nano has the lastest compatible version of
+Jetpack installed. You will need at least 4.6 to run the image, 5.xand greater are not compatible. Check
+[here](https://developer.nvidia.com/embedded/jetpack-archive) for a list of available Jetpack versions
+compatible with the Nano.
+
+Once Jetpack is updated you can log into the Docker image and mount the `aerial-segmentation` repository
+from the current directory inside it using:
+
+```
+sudo docker run -v ${PWD}/aerial-segmentation:/root/aerial-segmentation -it --runtime nvidia sydneyinformaticshub/aerialseg:det2-py38-jetson /bin/bash
+```
+
+The `sydneyinformaticshub/aerialseg:det2-py38-jetson` image can also be used as a base image to install
+further packages and scripts as required.
