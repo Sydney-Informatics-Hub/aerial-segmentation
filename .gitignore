@@ -165,3 +165,4 @@ weights/*
 output_data/*
 detectron2/*
 detectron2
+urban-small-2/*
