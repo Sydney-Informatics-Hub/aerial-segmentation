@@ -19,7 +19,7 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description="Fine-tune Detectron2 weights using annotated COCO dataset."
     )
-    wandb_group.add_argument(
+    add_argument(
         "--dataset",
         type=str,
         help="Dataset to use for fine tuning",
@@ -206,20 +206,12 @@ def main(args=None):
             project=args.wandb_project, entity=args.wandb_entity, sync_tensorboard=True
         )
 
-    # Download the roboflow dataset and register it in detectron2
-    dataset = get_roboflow_dataset(
-        args.roboflow_api_key,
-        args.workspace,
-        args.project,
-        version_number=args.project_version,
-    )
-
     # Register the train and test datasets with detectron2
     train_dataset = register_coco_dataset(
-        dataset.name, dataset.location, instance_type="train"
+        args.dataset, instance_type="train"
     )
-    test_dataset = register_coco_json_from_roboflow(
-        dataset.name, dataset.location, instance_type="test"
+    test_dataset = register_coco_dataset(
+        args.dataset, instance_type="test"
     )
 
     # Setup Detectron2 configuration from user supplied args and derive some
