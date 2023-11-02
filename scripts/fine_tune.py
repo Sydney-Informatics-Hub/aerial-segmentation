@@ -11,38 +11,18 @@ from detectron2.data.datasets import load_coco_json, register_coco_instances
 from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.utils.logger import setup_logger
-from roboflow import Roboflow
 
 setup_logger()
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        description="Fine-tune Detectron2 weights using annotated Roboflow dataset."
+        description="Fine-tune Detectron2 weights using annotated COCO dataset."
     )
-    roboflow_group = parser.add_argument_group("Roboflow options")
-    roboflow_group.add_argument(
-        "--workspace",
-        "-w",
+    wandb_group.add_argument(
+        "--dataset",
         type=str,
-        help="Roboflow workspace name.",
-        required=True,
-    )
-    roboflow_group.add_argument(
-        "--project",
-        "-p",
-        type=str,
-        help="Roboflow project name.",
-        required=True,
-    )
-    roboflow_group.add_argument(
-        "--project-version",
-        type=int,
-        default=0,
-        help="Roboflow project version number to download. (Default: Highest available).",
-    )
-    roboflow_group.add_argument(
-        "--roboflow-api-key", "-a", type=str, help="Roboflow API key.", required=True
+        help="Dataset to use for fine tuning",
     )
     wandb_group = parser.add_argument_group("Weights & Biases options")
     wandb_group.add_argument(
@@ -106,47 +86,8 @@ def create_parser():
     return parser
 
 
-def get_roboflow_dataset(
-    api_key: str, workspace: str, project: str, version_number: int = 0
-):
-    """Download a dataset from the Roboflow server.
 
-    Parameters
-    ----------
-    api_key : str
-        A Roboflow API key required to access the data.
-    workspace : str
-        Roboflow workspace name.
-    project : str
-        Roboflow project name.
-    version_number : int, optional
-        The version number of the Roboflow project.
-        Values < 1 mean find the highest available version.
-
-    Returns
-    -------
-    :class:`Dataset`
-        A Dataset instance pointing to the data downloaded from Roboflow
-    """
-
-    # This script only supports 'coco-segmentation' format.
-    # I'm making it explicit here in case we generalise it in future.
-    roboflow_dataset_format = "coco-segmentation"
-
-    rf = Roboflow(api_key=api_key)
-    project = rf.workspace(workspace).project(project)
-    version_list = project.versions()
-    all_versions = [os.path.basename(version.id) for version in version_list]
-    # if version_number is 0 get the highest available otherwise
-    # try to pick the specified version
-    if version_number < 1:
-        version_number = max(all_versions)
-    version = project.version(version_number)
-    dataset = version.download(roboflow_dataset_format)
-    return dataset
-
-
-def register_coco_json_from_roboflow(
+def register_coco_dataset(
     name: str, location: str, instance_type: str = "train"
 ):
     """Register a COCO JSON format file obtained from Roboflow for Detectron2
@@ -274,7 +215,7 @@ def main(args=None):
     )
 
     # Register the train and test datasets with detectron2
-    train_dataset = register_coco_json_from_roboflow(
+    train_dataset = register_coco_dataset(
         dataset.name, dataset.location, instance_type="train"
     )
     test_dataset = register_coco_json_from_roboflow(
