@@ -2,33 +2,33 @@
 # -*- coding: utf-8 -*-
 import argparse
 import os
+import random
 
 import wandb
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog, build_detection_test_loader
-from detectron2.data.datasets import load_coco_json, register_coco_instances
+from detectron2.data import MetadataCatalog, DatasetCatalog, build_detection_test_loader, DatasetMapper
+from detectron2.data.datasets import register_coco_instances
 from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.utils.logger import setup_logger
 
 setup_logger()
 
-
 def create_parser():
     parser = argparse.ArgumentParser(
         description="Fine-tune Detectron2 weights using annotated COCO dataset."
     )
-    add_argument(
+    parser.add_argument(
         "--dataset",
         type=str,
-        help="Dataset to use for fine tuning",
+        help="Path to the COCO dataset in JSON format.",
     )
     wandb_group = parser.add_argument_group("Weights & Biases options")
     wandb_group.add_argument(
         "--use-wandb",
         action="store_true",
-        help="Initialise Weights & Biases (wandb) for this run.",
+        help="Initialize Weights & Biases (wandb) for this run.",
     )
     wandb_group.add_argument(
         "--wandb-project",
@@ -46,12 +46,8 @@ def create_parser():
     det_group.add_argument(
         "--det2-model",
         type=str,
-        default=os.path.join(
-            "COCO-InstanceSegmentation", "mask_rcnn_R_101_FPN_3x.yaml"
-        ),
-        help="Detectron2 model configuration YAML to use. "
-        "See https://github.com/facebookresearch/detectron2/tree/main/configs for what is available. "
-        "(Default: %(default)s)",
+        default=os.path.join("COCO-InstanceSegmentation", "mask_rcnn_R_101_FPN_3x.yaml"),
+        help="Detectron2 model configuration YAML to use. See https://github.com/facebookresearch/detectron2/tree/main/configs for what is available. (Default: %(default)s)",
     )
     det_group.add_argument(
         "--batch-size",
@@ -69,58 +65,48 @@ def create_parser():
         "--output-dir",
         type=str,
         default=os.path.join(".", "output"),
-        help="Directory to save output configuration yaml and pre-trained weights. (Default: %(default)s)",
+        help="Directory to save output configuration YAML and pre-trained weights. (Default: %(default)s)",
     )
     det_group.add_argument(
         "--device",
         type=str,
         default="cuda",
         choices=["cuda", "cpu"],
-        help="Device (cuda or cpu) on which to run the fine tuning. (Default=%(default)s)",
+        help="Device (cuda or cpu) on which to run the fine-tuning. (Default=%(default)s)",
     )
     det_group.add_argument(
         "--evaluate-model",
         action="store_true",
-        help="Evaluate the model on the validation data after fine tuning.",
+        help="Evaluate the model on the validation data after fine-tuning.",
     )
     return parser
 
+def split_dataset(dataset, train_ratio=0.8):
+    random.seed(42)  # Set a fixed seed for reproducibility
+    random.shuffle(dataset)
+    split_idx = int(train_ratio * len(dataset))
+    train_dataset = dataset[:split_idx]
+    test_dataset = dataset[split_idx:]
+    return train_dataset, test_dataset
 
+def register_and_split_coco_dataset(coco_json, train_ratio=0.8):
+    # Register the COCO dataset
+    dataset_name = os.path.splitext(os.path.basename(coco_json))[0]
+    register_coco_instances(dataset_name, {}, coco_json, "")
 
-def register_coco_dataset(
-    name: str, location: str, instance_type: str = "train"
-):
-    """Register a COCO JSON format file obtained from Roboflow for Detectron2
-    instance detection.
+    # Load the dataset
+    dataset_dicts = DatasetCatalog.get(dataset_name)
 
-    Parameters
-    ----------
-    name : str
-        The name of the dataset obtained from Roboflow.
-    location : str
-        The root path of the dataset downloaded from Roboflow.
-    instance_type : str, optional
-        The instance type to register, defaults to 'train'.
-        It is assumed the COCO JSON and related images are contained in
-        the sub-directory `instance_type` of `location`.
+    # Split the dataset into training and testing
+    train_dataset, test_dataset = split_dataset(dataset_dicts, train_ratio)
 
-    Returns
-    -------
-    str
-        The name of the registered instance - which can be used by Detectron2.
-    """
-    # Roboflow always saves its COCO annotation file in the dir containing the
-    # images with this filename.
-    roboflow_coco_json_filename = "_annotations.coco.json"
+    # Register the split datasets with Detectron2
+    DatasetCatalog.register(f"{dataset_name}_train", lambda: train_dataset)
+    MetadataCatalog.get(f"{dataset_name}_train").set(thing_classes=MetadataCatalog.get(dataset_name).thing_classes)
+    DatasetCatalog.register(f"{dataset_name}_test", lambda: test_dataset)
+    MetadataCatalog.get(f"{dataset_name}_test").set(thing_classes=MetadataCatalog.get(dataset_name).thing_classes)
 
-    instance_name = name + "_" + instance_type
-    image_root = os.path.join(location, instance_type)
-    coco_json_file = os.path.join(location, instance_type, roboflow_coco_json_filename)
-    register_coco_instances(instance_name, {}, coco_json_file, image_root)
-    # Load the json to populate the `thing_classes` list in the Metdata
-    _ = load_coco_json(coco_json_file, image_root, instance_name)
-    return instance_name
-
+    return dataset_name
 
 def setup_detectron_config(
     model_name: str,
@@ -130,53 +116,18 @@ def setup_detectron_config(
     batch_size: int = 2,
     max_iter: int = 3000,
 ):
-    """Set up a Detectron2 configuration.
-
-    This will:
-    1. Load a default detectron2 config
-    2. Update the default with the detectron2 model configuration sepcified
-       in args.det2_model and set initial weights from the model
-    3. Derive configuration defaults from the
-       detectron2 dataset
-    4. Update configuration from parameters passed to this function.
-
-    Parameters
-    ----------
-    model_name : str
-        The name of the model (configuration and initial weights)
-        to use for training.
-    train_dataset : str
-        The instance name of the training dataset
-        (defined using `register_coco_json_from_roboflow`)
-    test_dataset : str
-        The instance name of the testing dataset
-        (defined using `register_coco_json_from_roboflow`)
-    output_dir : str
-        The path of the output directory into which the configuration yaml
-        and fine-tuned weights will be saved.
-    batch_size : int, optional
-        Number of images per batch in training.
-    max_iter : int, optional
-        Number of iterations in training.
-
-    Returns
-    -------
-    detectron2.config.CfgNode
-        The detectron2 configuration object
-    """
-
     # Load the default configuration
     cfg = get_cfg()
     # Merge configuration defaults from the specified model
     cfg.merge_from_file(model_zoo.get_config_file(model_name))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_name)
     # Set up the dataset names
-    cfg.DATASETS.TRAIN = (train_dataset,)
-    cfg.DATASETS.TEST = (test_dataset,)
+    cfg.DATASETS.TRAIN = (f"{train_dataset}_train",)
+    cfg.DATASETS.TEST = (f"{test_dataset}_test",)
     # Derive NUM_CLASSES from COCO JSON
-    coco_meta_cat = MetadataCatalog.get(train_dataset)
+    coco_meta_cat = MetadataCatalog.get(f"{train_dataset}_train")
     num_classes = len(coco_meta_cat.thing_classes)
-    # num_clsses + 1 to inculde 'background' as a class
+    # num_classes + 1 to include 'background' as a class
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = num_classes + 1
     # Set up some hardcoded defaults
     # Could expose any of these as command line options later
@@ -190,7 +141,6 @@ def setup_detectron_config(
     cfg.OUTPUT_DIR = output_dir
 
     return cfg
-
 
 def main(args=None):
     parser = create_parser()
@@ -206,13 +156,8 @@ def main(args=None):
             project=args.wandb_project, entity=args.wandb_entity, sync_tensorboard=True
         )
 
-    # Register the train and test datasets with detectron2
-    train_dataset = register_coco_dataset(
-        args.dataset, instance_type="train"
-    )
-    test_dataset = register_coco_dataset(
-        args.dataset, instance_type="test"
-    )
+    # Register the COCO dataset and split it into training and testing
+    dataset_name = register_and_split_coco_dataset(args.dataset)
 
     # Setup Detectron2 configuration from user supplied args and derive some
     # others.
@@ -221,8 +166,8 @@ def main(args=None):
     # command line argument.
     cfg = setup_detectron_config(
         args.det2_model,
-        train_dataset,
-        test_dataset,
+        dataset_name,
+        dataset_name,
         args.output_dir,
         batch_size=args.batch_size,
         max_iter=args.max_iter,
@@ -241,9 +186,7 @@ def main(args=None):
 
     # Evaluate the model if requested
     if args.evaluate_model:
-        val_dataset = register_coco_json_from_roboflow(
-            dataset.name, dataset.location, instance_type="valid"
-        )
+        val_dataset = f"{dataset_name}_test"
         cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
         predictor = DefaultPredictor(cfg)
@@ -251,10 +194,9 @@ def main(args=None):
         val_loader = build_detection_test_loader(cfg, val_dataset)
         inference_on_dataset(predictor.model, val_loader, evaluator)
 
-    # Save the config YAML to output directoryß
-    with open(os.path.join(cfg.OUTPUT_DIR, f"{dataset.name}_cfg.yaml"), "w") as f:
+    # Save the config YAML to the output directory
+    with open(os.path.join(cfg.OUTPUT_DIR, f"{dataset_name}_cfg.yaml"), "w") as f:
         f.write(cfg.dump())
-
 
 if __name__ == "__main__":
     main()
