@@ -29,6 +29,12 @@ def create_parser():
         "--test-json", type=str, required=True, help="Testing COCO JSON."
     )
     parser.add_argument(
+        "--eval-json",
+        type=str,
+        default=None,
+        help="Evaluation COCO JSON (Default: Use test)",
+    )
+    parser.add_argument(
         "--image-root",
         type=str,
         help="Root path of the images references in the Train and test COCO JSON.",
@@ -238,8 +244,9 @@ def main(args=None):
 
     # Evaluate the model if requested
     if args.evaluate_model:
+        eval_json = args.eval_json if args.eval_json else args.test_json
         val_dataset = register_coco_json(
-            f"{dataset_name}_test", args.test_json, args.image_root
+            f"{dataset_name}_valid", eval_json, args.image_root
         )
         cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
