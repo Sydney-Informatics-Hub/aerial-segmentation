@@ -5,11 +5,11 @@ import os
 
 import wandb
 from detectron2 import model_zoo
+from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog, build_detection_test_loader
 from detectron2.data.datasets import load_coco_json, register_coco_instances
 from detectron2.engine import DefaultPredictor, DefaultTrainer
-from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.engine.hooks import BestCheckpointer
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.utils.logger import setup_logger
@@ -21,11 +21,17 @@ class Trainer(DefaultTrainer):
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
         return COCOEvaluator(dataset_name)
-    
+
     def build_hooks(self):
         cfg = self.cfg.clone()
         ret = super().build_hooks()
-        ret.append(BestCheckpointer(eval_period=50, checkpointer=DetectionCheckpointer(self.model, cfg.OUTPUT_DIR), val_metric="bbox/AP50"))
+        ret.append(
+            BestCheckpointer(
+                eval_period=50,
+                checkpointer=DetectionCheckpointer(self.model, cfg.OUTPUT_DIR),
+                val_metric="bbox/AP50",
+            )
+        )
         return ret
 
 
@@ -58,6 +64,9 @@ def create_parser():
         "--use-wandb",
         action="store_true",
         help="Initialise Weights & Biases (wandb) for this run.",
+    )
+    wandb_group.add_argument(
+        "--wandb-key", type=str, default=None, help="Wandb API key."
     )
     wandb_group.add_argument(
         "--wandb-project",
