@@ -74,7 +74,26 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 ### Fine-tuning
 
-TBC
+Run on RONIN with a defined COCO JSON dataset in subdirectories.
+
+```bash
+conda create -n training python=3.9
+conda activate training
+
+# Split up the dataset into train and test using cocosplit
+git clone https://github.com/akarazniewicz/cocosplit
+cd cocosplit
+# Modify requirements.txt to replace sklearn with scikit-learn for python3.9
+pip install -r requirements.txt
+cd ..
+
+# Split the concatenated coco json into train and test.
+
+
+
+
+
+```
 
 ### Prediction
 
