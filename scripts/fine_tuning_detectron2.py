@@ -230,8 +230,7 @@ def main(args=None):
         wandb.init(
             project=args.wandb_project, entity=args.wandb_entity, sync_tensorboard=True
         )
-
-    dataset_name = "trees"
+    dataset_name = args.dataset_name
     # Register the train and test datasets with detectron2
     train_dataset = register_coco_json(
         f"{dataset_name}_train", args.train_json, args.image_root
