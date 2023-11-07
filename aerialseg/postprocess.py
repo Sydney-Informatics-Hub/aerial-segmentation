@@ -22,13 +22,13 @@ import geopandas as gpd
 from shapely.validation import make_valid
 
 
-def detectron2_to_geojson(outputs,input_image,output_geojson):
+def detectron2_to_polygons(outputs, prediction_simplification=1):
 
-  mask_array = buildings["instances"].pred_masks.to("cpu").numpy()
+  mask_array = outputs["instances"].pred_masks.to("cpu").numpy()
   num_instances = mask_array.shape[0]
   # scores = output['instances'].scores.to("cpu").numpy()
-  labels = buildings["instances"].pred_classes.to("cpu").numpy()
-  bbox = buildings["instances"].pred_boxes.to("cpu").tensor.numpy()
+  labels = outputs["instances"].pred_classes.to("cpu").numpy()
+  bbox = outputs["instances"].pred_boxes.to("cpu").tensor.numpy()
   # print(mask_array.shape)
   mask_array = np.moveaxis(mask_array, 0, -1)
   mask_arrays = []
@@ -47,7 +47,7 @@ def detectron2_to_geojson(outputs,input_image,output_geojson):
           for polygon in polygon_sv:
               polygon = polygon_prep(
                   polygon,
-                  simplify_tolerance=1,
+                  simplify_tolerance=prediction_simplification,
                   minimum_rotated_rectangle=False,
                 )
               mask_arrays.append(mask_array_instance)
@@ -58,12 +58,16 @@ def detectron2_to_geojson(outputs,input_image,output_geojson):
       else:
           warnings.warn(f"Polygon {i} is empty! Skipping polygon.")
 
+  return polygons
+
 def convert_polygons_to_geospatial(polygons, tif_file):
     with rasterio.open(tif_file) as src:
         raster_transform = src.transform
 
-    geospatial_polygons = []
+    # make polygons into an np array
+    polygons = [np.array(polygons[i]).reshape(-1, 2) for i in range(len(polygons))]
 
+    geospatial_polygons = []  
     for polygon_vertices in polygons:
         # Convert polygon vertices to geospatial coordinates
         geo_polygon = []
@@ -82,5 +86,10 @@ def convert_polygons_to_geospatial(polygons, tif_file):
 
     # Create a GeoDataFrame from the Shapely polygons
     gdf = gpd.GeoDataFrame({'geometry': geospatial_polygons})
+    #give the gdf the raster's crs
+    gdf = geo_dataframe.set_crs(src.crs)
 
+    # Example saving geojson
+    #geo_dataframe.to_file("output.geojson", driver="GeoJSON")
+  
     return gdf
