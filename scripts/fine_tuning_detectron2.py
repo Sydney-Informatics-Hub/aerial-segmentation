@@ -27,7 +27,7 @@ class Trainer(DefaultTrainer):
         ret = super().build_hooks()
         ret.append(
             BestCheckpointer(
-                eval_period=50,
+                eval_period=-1,
                 checkpointer=DetectionCheckpointer(self.model, cfg.OUTPUT_DIR),
                 val_metric="bbox/AP50",
             )
