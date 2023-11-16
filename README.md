@@ -82,8 +82,7 @@ conda activate training
 ```
 
 #### 1. Get raster & geojson annotations using aerial annotation
-Need to specify what the data needs to look like, structure of raster and annotations
-
+Refer to examples in [aerial-annotation](https://github.com/Sydney-Informatics-Hub/aerial-annotation) for what the data needs to look like, e.g. directory structure of raster and annotation files.
 
 #### 2. Convert the geojson annotations into COCO JSON files, and concatenate the converted COCO JSONs into one file using aerial conversion
 
