@@ -76,24 +76,54 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 Run on RONIN with a defined COCO JSON dataset in subdirectories.
 
-```bash
+```{bash}
 conda create -n training python=3.9
 conda activate training
+```
 
-# Split up the dataset into train and test using cocosplit
+#### 1. Get raster & geojson annotations using aerial annotation
+Need to specify what the data needs to look like, structure of raster and annotations
+
+
+#### 2. Convert the geojson annotations into COCO JSON files, and concatenate the converted COCO JSONs into one file using aerial conversion
+
+Refer to examples in [aerial-conversion](https://github.com/Sydney-Informatics-Hub/aerial-conversion) for how to convert and concatenate geojson files into one COCO JSON file.
+
+
+#### 3. Split the concatenated COCO JSON into train and test (and valid) using cocosplit.
+
+Example usage to split into train, test and valid data sets:
+```
 git clone https://github.com/akarazniewicz/cocosplit
-cd cocosplit
+
 # Modify requirements.txt to replace sklearn with scikit-learn for python3.9
 pip install -r requirements.txt
-cd ..
 
-# Split the concatenated coco json into train and test.
+cd cocosplit
 
+python cocosplit.py -s 0.7 path_to_concatenated_coco.json train.json test_valid.json
 
-
-
-
+python cocosplit.py -s 0.66667 test_valid.json test.json valid.json
 ```
+
+
+#### 4. Run the fine tuning script `scripts/fine_tuning_detectron2.py`
+
+Run `python scripts/fine_tuning_detectron2.py -h` to display the help message that describes all the available command-line options and arguments for model fine tuning.
+
+Example usage:
+```
+python scripts/fine_tuning_detectron2.py \
+--train-json train.json \
+--test-json test.json \
+--eval-json valid.json --evaluate-model \
+--image-root path_to_rasters/ \
+--max-iter=20000 --batch-size=8 --device=cuda \
+--dataset-name=my_dataset \
+--output-dir path_to_model_output/ \
+--use-wandb --wandb-key samplekey5d6f65e625c
+```
+
 
 ### Prediction
 
