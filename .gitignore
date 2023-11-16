@@ -172,3 +172,4 @@ detectron2/*
 detectron2
 urban-small-2/*
 urban-small-2
+wandb/

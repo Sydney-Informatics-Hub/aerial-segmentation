@@ -74,7 +74,55 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 ### Fine-tuning
 
-TBC
+Run on RONIN with a defined COCO JSON dataset in subdirectories.
+
+```{bash}
+conda create -n training python=3.9
+conda activate training
+```
+
+#### 1. Get raster & geojson annotations using aerial annotation
+Refer to examples in [aerial-annotation](https://github.com/Sydney-Informatics-Hub/aerial-annotation) for what the data needs to look like, e.g. directory structure of raster and annotation files.
+
+#### 2. Convert the geojson annotations into COCO JSON files, and concatenate the converted COCO JSONs into one file using aerial conversion
+
+Refer to examples in [aerial-conversion](https://github.com/Sydney-Informatics-Hub/aerial-conversion) for how to convert and concatenate geojson files into one COCO JSON file.
+
+
+#### 3. Split the concatenated COCO JSON into train and test (and valid) using cocosplit.
+
+Example usage to split into train (70%), test (20%) and valid (10%) data sets:
+```
+git clone https://github.com/akarazniewicz/cocosplit
+
+# Modify requirements.txt to replace sklearn with scikit-learn for python3.9
+pip install -r requirements.txt
+
+cd cocosplit
+
+python cocosplit.py -s 0.7 /path/to/concatenated_coco.json /path/to/save/output/train.json /path/to/save/output/test_valid.json
+
+python cocosplit.py -s 0.667 /path/to/test_valid.json /path/to/save/output/test.json /path/to/save/output/valid.json
+```
+
+
+#### 4. Run the fine tuning script `scripts/fine_tuning_detectron2.py`
+
+Run `python scripts/fine_tuning_detectron2.py -h` to display the help message that describes all the available command-line options and arguments for model fine tuning.
+
+Example usage:
+```
+python scripts/fine_tuning_detectron2.py \
+--train-json /path/to/train.json \
+--test-json /path/to/test.json \
+--eval-json /path/to/valid.json --evaluate-model \
+--image-root path/to/rasters/ \
+--max-iter=20000 --batch-size=8 --device=cuda \
+--dataset-name=my_dataset \
+--output-dir path/to/save/model/output/ \
+--use-wandb --wandb-key samplekey5d6f65e625c
+```
+
 
 ### Prediction
 
