@@ -92,7 +92,7 @@ Refer to examples in [aerial-conversion](https://github.com/Sydney-Informatics-H
 
 #### 3. Split the concatenated COCO JSON into train and test (and valid) using cocosplit.
 
-Example usage to split into train, test and valid data sets:
+Example usage to split into train (70%), test (20%) and valid (10%) data sets:
 ```
 git clone https://github.com/akarazniewicz/cocosplit
 
@@ -101,9 +101,9 @@ pip install -r requirements.txt
 
 cd cocosplit
 
-python cocosplit.py -s 0.7 path_to_concatenated_coco.json train.json test_valid.json
+python cocosplit.py -s 0.7 /path/to/concatenated_coco.json /path/to/save/output/train.json /path/to/save/output/test_valid.json
 
-python cocosplit.py -s 0.66667 test_valid.json test.json valid.json
+python cocosplit.py -s 0.667 /path/to/test_valid.json /path/to/save/output/test.json /path/to/save/output/valid.json
 ```
 
 
@@ -114,13 +114,13 @@ Run `python scripts/fine_tuning_detectron2.py -h` to display the help message th
 Example usage:
 ```
 python scripts/fine_tuning_detectron2.py \
---train-json train.json \
---test-json test.json \
---eval-json valid.json --evaluate-model \
---image-root path_to_rasters/ \
+--train-json /path/to/train.json \
+--test-json /path/to/test.json \
+--eval-json /path/to/valid.json --evaluate-model \
+--image-root path/to/rasters/ \
 --max-iter=20000 --batch-size=8 --device=cuda \
 --dataset-name=my_dataset \
---output-dir path_to_model_output/ \
+--output-dir path/to/save/model/output/ \
 --use-wandb --wandb-key samplekey5d6f65e625c
 ```
 
