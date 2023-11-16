@@ -1,3 +1,8 @@
+matplotlib
+netron
+numpy
+onnx
+onnxruntime
 pre-commit
 roboflow
 torch
