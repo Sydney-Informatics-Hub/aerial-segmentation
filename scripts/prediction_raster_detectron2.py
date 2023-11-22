@@ -9,6 +9,7 @@ import os
 
 # import geopandas as gpd
 import rasterio as rio
+from aerial_conversion.coco import raster_to_coco
 from aerial_conversion.tiles import save_tiles
 from detectron2.config import get_cfg
 
@@ -131,7 +132,10 @@ def main(args=None):
 
     # Create a temporary directory to store the raster tiles.
     if args.temp_dir is None:
-        out_path = os.path.join(".", "tmp")
+        out_path = os.path.join(".", ".tmp", "tiles")
+
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
 
     # Preapare raster and tiles
     log.info(f"Creating {tile_size} m*m tiles from {raster_path}")
@@ -153,7 +157,12 @@ def main(args=None):
     log.info(f"{len(raster_file_list)} raster tiles created")
 
     # Make png images from the tiles
-    # TODO use aerial_conversion tools for this.
+    images = []
+    for filename in raster_file_list:
+        raster_to_coco(filename, 0, "png")
+        images.append(filename.replace(".tif", ".png"))
+
+    log.info(f"{len(images)} png tiles created")
 
     # Prepare model
     cfg = get_cfg()
@@ -176,8 +185,6 @@ def main(args=None):
     else:
         categories_keyed = None
 
-    # scan the input directory for images based on the pattern given
-    images = glob.glob(os.path.join(args.indir, args.in_pattern))
     assert (
         len(images) > 0
     ), f"No images found in the input directory given the pattern {args.in_pattern}."
