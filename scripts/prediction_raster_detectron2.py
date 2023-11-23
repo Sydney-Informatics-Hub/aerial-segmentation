@@ -43,7 +43,7 @@ def create_parser():
     )
     parser.add_argument(
         "--overlap",
-        "-o",
+        "-l",
         type=int,
         default=10,
         help="Overlap size in percent. Default: %(default)s.",
