@@ -37,9 +37,9 @@ def create_parser():
     parser.add_argument(
         "--tile-size",
         "-z",
-        type=int,
+        type=float,
         default=1000,
-        help="Tile size in meters. Default: %(default)s.",
+        help="Tile size in degrees. Default: %(default)s.",
     )
     parser.add_argument(
         "--overlap",
