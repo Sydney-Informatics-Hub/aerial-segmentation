@@ -163,6 +163,15 @@ python -m scripts.prediction_detectron2  --help
 
 ```
 
+For prediction and yielding a COCO JSON from a raster, you can use the following script:
+
+```bash
+
+python -m scripts.prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json"  --simplify-tolerance 0.95
+
+```
+
+
 ## Contributing to the Project
 
 Please make sure to install all the required libraries in the [requirements.txt](https://github.com/Sydney-Informatics-Hub/aerial-segmentation/tree/main/requirements.txt) file for development.
