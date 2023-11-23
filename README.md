@@ -167,7 +167,7 @@ For prediction and yielding a COCO JSON from a raster, you can use the following
 
 ```bash
 
-python -m scripts.prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json"  --simplify-tolerance 0.95
+python -m scripts.prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json" --temp-dir "path/to/tile/storage/" --simplify-tolerance 0.95
 
 ```
 
