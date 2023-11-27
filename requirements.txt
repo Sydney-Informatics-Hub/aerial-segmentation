@@ -8,4 +8,4 @@ pillow
 tqdm
 Sphinx
 sphinx_rtd_theme
-
+git+https://github.com/Sydney-Informatics-Hub/aerial-conversion.git
