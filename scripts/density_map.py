@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
+import argparse
 import logging
 
 import geopandas as gpd
-
-# import rasterio as rio
 import numpy as np
 from shapely.geometry import Polygon
 
@@ -196,13 +195,13 @@ def density_estimate_area_area(
 
 
 def density_map_maker(
-    gdf,
+    gdf: gpd.GeoDataFrame,
     average_storeys: int = None,
     footprint_ratio: float = 0.5,
     tile_size: int = 100,
     size_unit: str = None,
     area_unit: str = "utm",
-):
+) -> gpd.GeoDataFrame:
     """This function will use the density_estimate_combined_area function to
     create a density map, by tiling the geojson.
 
@@ -213,6 +212,9 @@ def density_map_maker(
         tile_size (int): The size of the tile. Defaults to 10.
         size_unit (str): The unit of the tile size. If is None, will use the unit of the crs of the gdf or from 'area_unit'. If set to 'percent', will use the percentage of the width of the gdf bounds. Defaults to percent. Overall, this can be ignored as long as percentage of width is the preferred window size.
         area_unit (str): The unit of the area. Defaults to "utm".
+
+    Returns:
+        grid (geodataframe): A geodataframe of the density map.
     """
 
     # Prepare the gdf
@@ -230,7 +232,6 @@ def density_map_maker(
     # Get the bounds of the gdf
     bounds = gdf.total_bounds
     width = abs(bounds[2] - bounds[0])
-    height = abs(bounds[3] - bounds[1])
     x_min, y_min, x_max, y_max = bounds
 
     # Get the tile size
@@ -243,6 +244,7 @@ def density_map_maker(
 
     assert tile_size > 0, "tile_size must be greater than 0."
 
+    # Create the grid
     x_coords = np.arange(x_min, x_max, tile_size)
     y_coords = np.arange(y_min, y_max, tile_size)
     polygons = []
@@ -259,11 +261,10 @@ def density_map_maker(
                 )
             )
     grid = gpd.GeoDataFrame({"geometry": polygons}, crs=gdf.crs)
-    intersected = gpd.overlay(gdf, grid, how="intersection")
 
-    # TODO for each window, calculate the density_estimate_combined_area
-
-    for extent in intersected.geometry:
+    # Get the density for each tile
+    density_map = []
+    for extent in grid.geometry:
         raster_extent = gpd.GeoDataFrame({"id": 1, "geometry": [extent]}, crs=gdf.crs)
         tile_polygons = gdf.clip(raster_extent)
 
@@ -271,12 +272,135 @@ def density_map_maker(
         tile_polygons = tile_polygons.explode(index_parts=False)
         tile_polygons = tile_polygons.reset_index(drop=True)
 
-        intersected
-        tile_polygons
-        average_storeys
-        footprint_ratio
-        tile_size
-        size_unit
-        height
+        # get density for each tile
+        density_map.append(
+            density_estimate_combined_area(
+                tile_polygons,
+                crs=crs,
+                average_storeys=average_storeys,
+                footprint_ratio=footprint_ratio,
+            )
+        )
 
-    # TODO return a density map
+    # Create the density map
+    grid["density"] = density_map
+
+    return grid
+
+
+def density_maker_geojson(
+    input_path: str,
+    average_storeys: int = None,
+    footprint_ratio: float = 0.5,
+    tile_size: int = 100,
+    size_unit: str = None,
+    area_unit: str = "utm",
+    output_path: str = None,
+) -> gpd.GeoDataFrame:
+    """This function is a wrapper function for density_map_maker calculating
+    and saving the density map as a geojson.
+
+    Args:
+        gdf (str): A path to a geojson file of annotations.
+        average_storeys (int): The average number of storeys of buildings in the annotation geodataframe. If None, will not calculate the average number of storeys using the meta data. Defaults to None.
+        footprint_ratio (float): The ratio of the footprint-area-based density to number-based density calculations. It should be a number between 0 and 1. 0 means the footprint area density won't be considered and 1 means number density won't be considered. Defaults to 0.5.
+        tile_size (int): The size of the tile. Defaults to 10.
+        size_unit (str): The unit of the tile size. If is None, will use the unit of the crs of the gdf or from 'area_unit'. If set to 'percent', will use the percentage of the width of the gdf bounds. Defaults to percent. Overall, this can be ignored as long as percentage of width is the preferred window size.
+        area_unit (str): The unit of the area. Defaults to "utm".
+        output_path (str): The path to save the output geojson. If None, will not save the output geojson. Defaults to None.
+
+    Returns:
+        grid (geodataframe): A geodataframe of the density map.
+    """
+    # read the geojson
+    gdf = gpd.read_file(input_path)
+
+    # create the density map
+    grid = density_map_maker(
+        gdf,
+        average_storeys=average_storeys,
+        footprint_ratio=footprint_ratio,
+        tile_size=tile_size,
+        size_unit=size_unit,
+        area_unit=area_unit,
+    )
+
+    # save the density map
+    if output_path is not None:
+        grid.to_json(output_path)
+    else:
+        output_path.replace(".geojson", "_density.geojson")
+        grid.to_json(output_path)
+
+    return grid
+
+
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description="Create a density map from a geojson of annotations."
+    )
+    parser.add_argument(
+        "--input-path",
+        "-i",
+        type=str,
+        required=True,
+        help="Path to a geojson file of annotations.",
+    )
+    parser.add_argument(
+        "--output-path",
+        "-o",
+        type=str,
+        default=None,
+        help="The path to save the output geojson. If None, will not save the output geojson. Defaults to None.",
+    )
+    parser.add_argument(
+        "--average-storeys",
+        "-a",
+        type=int,
+        default=None,
+        help="The average number of storeys of buildings in the annotation geodataframe. If None, will not calculate the average number of storeys using the meta data. Defaults to None.",
+    )
+    parser.add_argument(
+        "--footprint-ratio",
+        "-f",
+        type=float,
+        default=0.5,
+        help="The ratio of the footprint-area-based density to number-based density calculations. It should be a number between 0 and 1. 0 means the footprint area density won't be considered and 1 means number density won't be considered. Defaults to 0.5.",
+    )
+    parser.add_argument(
+        "--tile-size",
+        "-t",
+        type=int,
+        default=100,
+        help="The size of the tile. Defaults to 10.",
+    )
+    parser.add_argument(
+        "--size-unit",
+        "-u",
+        type=str,
+        default=None,
+        help="The unit of the tile size. If is None, will use the unit of the crs of the gdf or from 'area_unit'. If set to 'percent', will use the percentage of the width of the gdf bounds. Defaults to percent. Overall, this can be ignored as long as percentage of width is the preferred window size.",
+    )
+    parser.add_argument(
+        "--area-unit",
+        "-r",
+        type=str,
+        default="utm",
+        help="The unit of the area. Defaults to 'utm'.",
+    )
+    return parser
+
+
+def main(args=None):
+    parser = create_parser()
+    args = parser.parse_args(args)
+
+    density_maker_geojson(
+        args.input_path,
+        average_storeys=args.average_storeys,
+        footprint_ratio=args.footprint_ratio,
+        tile_size=args.tile_size,
+        size_unit=args.size_unit,
+        area_unit=args.area_unit,
+        output_path=args.output_path,
+    )
