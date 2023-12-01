@@ -5,10 +5,13 @@ import logging
 import geopandas as gpd
 import numpy as np
 from shapely.geometry import Polygon
+from tqdm import tqdm
 
 # set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
+
+tqdm.pandas()
 
 
 def storey_averager(annotation, storey_column="storeys"):
@@ -52,7 +55,7 @@ def density_estimate_combined_area(
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
-    number that is the aera of the annotation geodataframe divided by the
+    number that is the area of the annotation geodataframe divided by the
     number of geometries in the annotation geodataframe.
 
     Args:
@@ -89,7 +92,7 @@ def density_estimate_number_area(
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
-    number that is the aera of the annotation geodataframe divided by the
+    number that is the area of the annotation geodataframe divided by the
     number of geometries in the annotation geodataframe.
 
     Args:
@@ -109,7 +112,7 @@ def density_estimate_number_area(
             logger.warning(
                 f"Could not estimate the UTM crs of the annotation geodataframe. Will use {crs} as fallback."
             )
-            print(e)
+            logger.warning(e)
 
     if annotation.crs != crs:
         annotation = annotation.to_crs(crs)
@@ -143,7 +146,7 @@ def density_estimate_area_area(
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
-    number that is the aera of the annotation geodataframe divided by the
+    number that is the area of the annotation geodataframe divided by the
     number of geometries in the annotation geodataframe.
 
     Args:
@@ -162,7 +165,7 @@ def density_estimate_area_area(
             logger.warning(
                 f"Could not estimate the UTM crs of the annotation geodataframe. Will use {crs} as fallback."
             )
-            print(e)
+            logger.warning(e)
 
     if annotation.crs != crs:
         annotation = annotation.to_crs(crs)
@@ -261,11 +264,28 @@ def density_map_maker(
                 )
             )
     grid = gpd.GeoDataFrame({"geometry": polygons}, crs=gdf.crs)
+    gdf = gdf[gdf.geometry.area > 0]
+    gdf = gdf.reset_index(drop=True)
 
+    gdf["geometry"] = gdf["geometry"].buffer(0)
+
+    logger.info(
+        f"Created a grid of {grid.shape[0]} tiles. Now getting the grid densities..."
+    )
     # Get the density for each tile
     density_map = []
-    for extent in grid.geometry:
+    for extent in tqdm(grid.geometry, total=grid.shape[0]):
         raster_extent = gpd.GeoDataFrame({"id": 1, "geometry": [extent]}, crs=gdf.crs)
+
+        # save polygon extent to shp
+        # raster_extent_cp = raster_extent.copy()
+        # raster_extent_cp["geometry"] = raster_extent_cp["geometry"].buffer(0)
+        # set crs
+        # raster_extent_cp.crs = gdf.crs
+        # raster_extent_cp.to_file("raster_extent.shp")
+
+        raster_extent = raster_extent.buffer(0)
+
         tile_polygons = gdf.clip(raster_extent)
 
         # Split multipolygon
@@ -273,14 +293,14 @@ def density_map_maker(
         tile_polygons = tile_polygons.reset_index(drop=True)
 
         # get density for each tile
-        density_map.append(
-            density_estimate_combined_area(
-                tile_polygons,
-                crs=crs,
-                average_storeys=average_storeys,
-                footprint_ratio=footprint_ratio,
-            )
+        density = density_estimate_combined_area(
+            tile_polygons,
+            crs=crs,
+            average_storeys=average_storeys,
+            footprint_ratio=footprint_ratio,
         )
+        print(density)
+        density_map.append(density)
 
     # Create the density map
     grid["density"] = density_map
@@ -315,6 +335,8 @@ def density_maker_geojson(
     # read the geojson
     gdf = gpd.read_file(input_path)
 
+    # print("Geodataframe:\n",gdf)
+
     # create the density map
     grid = density_map_maker(
         gdf,
@@ -325,12 +347,16 @@ def density_maker_geojson(
         area_unit=area_unit,
     )
 
+    print("Grid:\n", grid.density)
+
     # save the density map
     if output_path is not None:
-        grid.to_json(output_path)
+        grid.to_file(output_path, driver="GeoJSON")
     else:
-        output_path.replace(".geojson", "_density.geojson")
-        grid.to_json(output_path)
+        output_path = input_path.replace(".geojson", "_density.geojson")
+        grid.to_file(output_path, driver="GeoJSON")
+
+    logger.info(f"Saved the density map to {output_path}")
 
     return grid
 
@@ -371,8 +397,8 @@ def create_parser():
         "--tile-size",
         "-t",
         type=int,
-        default=100,
-        help="The size of the tile. Defaults to 10.",
+        default=200,
+        help="The size of the tile. Defaults to 200.",
     )
     parser.add_argument(
         "--size-unit",
@@ -404,3 +430,7 @@ def main(args=None):
         area_unit=args.area_unit,
         output_path=args.output_path,
     )
+
+
+if main:
+    main()
