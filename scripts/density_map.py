@@ -141,12 +141,12 @@ def density_estimate_number_area(
     # width = abs(bounds[2] - bounds[0])
     # height = abs(bounds[3] - bounds[1])
     # area = width * height
-    print("area", area)
+    # print("area", area)
     number = annotation.shape[0]
-    print("number", number)
-    print("average_storeys", average_storeys)
+    # print("number", number)
+    # print("average_storeys", average_storeys)
     density = (number * average_storeys) / area
-    print("number density", density)
+    # print("number density", density)
 
     return density
 
@@ -204,14 +204,14 @@ def density_estimate_area_area(
     # width = abs(bounds[2] - bounds[0])
     # height = abs(bounds[3] - bounds[1])
     # area = width * height
-    print("area", area)
+    # print("area", area)
     footprint_area = 0
     for _, row in annotation.iterrows():
         footprint_area += row["geometry"].area
-    print("footprint_area", footprint_area)
-    print("average_storeys", average_storeys)
+    # print("footprint_area", footprint_area)
+    # print("average_storeys", average_storeys)
     density = (footprint_area * average_storeys) / area
-    print("area density", density)
+    # print("area density", density)
 
     return density
 
@@ -320,7 +320,7 @@ def density_map_maker(
             footprint_ratio=footprint_ratio,
             area=area,
         )
-        print("grid density:", density, "\n=======")
+        # print("grid density:", density, "\n=======")
         density_map.append(density)
 
     # Create the density map
