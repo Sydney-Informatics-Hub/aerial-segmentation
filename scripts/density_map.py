@@ -52,6 +52,7 @@ def density_estimate_combined_area(
     average_storeys=None,
     footprint_ratio: float = 0.5,
     storey_column: str = "storeys",
+    area: float = None,
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
@@ -73,11 +74,11 @@ def density_estimate_combined_area(
     ), "footprint_ratio must be between 0 and 1"
 
     density_area = density_estimate_area_area(
-        annotation, crs, average_storeys, storey_column
+        annotation, crs, average_storeys, storey_column, area
     )
 
     density_number = density_estimate_number_area(
-        annotation, crs, average_storeys, storey_column
+        annotation, crs, average_storeys, storey_column, area
     )
 
     density = (
@@ -88,7 +89,11 @@ def density_estimate_combined_area(
 
 
 def density_estimate_number_area(
-    annotation, crs=None, average_storeys=None, storey_column: str = "storeys"
+    annotation,
+    crs=None,
+    average_storeys=None,
+    storey_column: str = "storeys",
+    area=None,
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
@@ -132,21 +137,26 @@ def density_estimate_number_area(
         logger.info(
             f"Average storeys is {average_storeys} for the given extent {annotation.bounds}"
         )
-    bounds = annotation.total_bounds
-    width = abs(bounds[2] - bounds[0])
-    height = abs(bounds[3] - bounds[1])
-    area = width * height
-    # print("area", area)
+    # bounds = annotation.total_bounds
+    # width = abs(bounds[2] - bounds[0])
+    # height = abs(bounds[3] - bounds[1])
+    # area = width * height
+    print("area", area)
     number = annotation.shape[0]
-    # print("number", number)
-
+    print("number", number)
+    print("average_storeys", average_storeys)
     density = (number * average_storeys) / area
+    print("number density", density)
 
     return density
 
 
 def density_estimate_area_area(
-    annotation, crs=None, average_storeys=None, storey_column: str = "storeys"
+    annotation,
+    crs=None,
+    average_storeys=None,
+    storey_column: str = "storeys",
+    area: float = None,
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
@@ -190,16 +200,18 @@ def density_estimate_area_area(
             f"Average storeys is {average_storeys} for the given extent {annotation.bounds}"
         )
 
-    bounds = annotation.total_bounds
-    width = abs(bounds[2] - bounds[0])
-    height = abs(bounds[3] - bounds[1])
-    area = width * height
-    # print("area", area)
+    # bounds = annotation.total_bounds
+    # width = abs(bounds[2] - bounds[0])
+    # height = abs(bounds[3] - bounds[1])
+    # area = width * height
+    print("area", area)
     footprint_area = 0
     for _, row in annotation.iterrows():
         footprint_area += row["geometry"].area
-    # print("footprint_area", footprint_area)
+    print("footprint_area", footprint_area)
+    print("average_storeys", average_storeys)
     density = (footprint_area * average_storeys) / area
+    print("area density", density)
 
     return density
 
@@ -242,6 +254,7 @@ def density_map_maker(
     # Get the bounds of the gdf
     bounds = gdf.total_bounds
     width = abs(bounds[2] - bounds[0])
+    area = width * width
     x_min, y_min, x_max, y_max = bounds
 
     # Get the tile size
@@ -305,8 +318,9 @@ def density_map_maker(
             crs=crs,
             average_storeys=average_storeys,
             footprint_ratio=footprint_ratio,
+            area=area,
         )
-        # print(density)
+        print("grid density:", density, "\n=======")
         density_map.append(density)
 
     # Create the density map
