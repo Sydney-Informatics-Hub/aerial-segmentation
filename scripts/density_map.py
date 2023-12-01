@@ -132,9 +132,13 @@ def density_estimate_number_area(
         logger.info(
             f"Average storeys is {average_storeys} for the given extent {annotation.bounds}"
         )
-
-    area = annotation.area
+    bounds = annotation.total_bounds
+    width = abs(bounds[2] - bounds[0])
+    height = abs(bounds[3] - bounds[1])
+    area = width * height
+    # print("area", area)
     number = annotation.shape[0]
+    # print("number", number)
 
     density = (number * average_storeys) / area
 
@@ -186,12 +190,15 @@ def density_estimate_area_area(
             f"Average storeys is {average_storeys} for the given extent {annotation.bounds}"
         )
 
-    area = annotation.area
-
+    bounds = annotation.total_bounds
+    width = abs(bounds[2] - bounds[0])
+    height = abs(bounds[3] - bounds[1])
+    area = width * height
+    # print("area", area)
     footprint_area = 0
     for _, row in annotation.iterrows():
         footprint_area += row["geometry"].area
-
+    # print("footprint_area", footprint_area)
     density = (footprint_area * average_storeys) / area
 
     return density
@@ -299,7 +306,7 @@ def density_map_maker(
             average_storeys=average_storeys,
             footprint_ratio=footprint_ratio,
         )
-        print(density)
+        # print(density)
         density_map.append(density)
 
     # Create the density map
@@ -347,7 +354,7 @@ def density_maker_geojson(
         area_unit=area_unit,
     )
 
-    print("Grid:\n", grid.density)
+    print("Grid:\n", grid)
 
     # save the density map
     if output_path is not None:
