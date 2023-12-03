@@ -223,6 +223,7 @@ def density_map_maker(
     tile_size: int = 100,
     size_unit: str = None,
     area_unit: str = "utm",
+    storey_column: str = "storeys",
 ) -> gpd.GeoDataFrame:
     """This function will use the density_estimate_combined_area function to
     create a density map, by tiling the geojson.
@@ -317,6 +318,7 @@ def density_map_maker(
             tile_polygons,
             crs=crs,
             average_storeys=average_storeys,
+            storey_column=storey_column,
             footprint_ratio=footprint_ratio,
             area=area,
         )
@@ -337,6 +339,7 @@ def density_maker_geojson(
     size_unit: str = None,
     area_unit: str = "utm",
     output_path: str = None,
+    storey_column: str = "storeys",
 ) -> gpd.GeoDataFrame:
     """This function is a wrapper function for density_map_maker calculating
     and saving the density map as a geojson.
@@ -366,6 +369,7 @@ def density_maker_geojson(
         tile_size=tile_size,
         size_unit=size_unit,
         area_unit=area_unit,
+        storey_column=storey_column,
     )
 
     print("Grid:\n", grid)
@@ -406,6 +410,13 @@ def create_parser():
         type=int,
         default=None,
         help="The average number of storeys of buildings in the annotation geodataframe. If None, will not calculate the average number of storeys using the meta data. Defaults to None.",
+    )
+    parser.add_argument(
+        "--storey-column",
+        "-s",
+        type=str,
+        default="storeys",
+        help="The column name of the storey information. Defaults to 'storeys'.",
     )
     parser.add_argument(
         "--footprint-ratio",
@@ -450,6 +461,7 @@ def main(args=None):
         size_unit=args.size_unit,
         area_unit=args.area_unit,
         output_path=args.output_path,
+        storey_column=args.storey_column,
     )
 
 
