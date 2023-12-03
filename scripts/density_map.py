@@ -32,11 +32,11 @@ def storey_averager(annotation, storey_column="storeys"):
                 or row[storey_column] == "0"
                 or row[storey_column] == 0
             ):
-                annotation.drop(i, inplace=True)
+                annotation_d = annotation.drop(i)
         except KeyError:
             pass
     try:
-        average_storeys = annotation[storey_column].mean()
+        average_storeys = annotation_d[storey_column].mean()
     except KeyError:
         average_storeys = 1
         logger.warning(
