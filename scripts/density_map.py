@@ -54,10 +54,10 @@ def density_estimate_combined_area(
     storey_column: str = "storeys",
     area: float = None,
 ) -> float:
-    """This function will get the area of annotation geodataframe, and also get
-    the number of geometries in the annotation geodataframe, and return a
-    number that is the area of the annotation geodataframe divided by the
-    number of geometries in the annotation geodataframe.
+    """This function uses the density_estimate_area_area and
+    density_estimate_number_area functions to create a combined density
+    estimate. It uses the footprint_ratio to determine the ratio of the two
+    density estimates.
 
     Args:
         annotation (geodataframe): A geodataframe of annotations.
@@ -66,7 +66,7 @@ def density_estimate_combined_area(
         footprint_ratio (float): The ratio of the footprint-area-based density to number-based density calculations. It should be a number between 0 and 1. 0 means the footprint area density won't be considered and 1 means number density won't be considered. Defaults to 0.5.
 
     Returns:
-        density (float): The area of the annotation geodataframe divided by the number of geometries in the annotation geodataframe.
+        density (float): The combined density estimate.
     """
 
     assert (
@@ -97,8 +97,8 @@ def density_estimate_number_area(
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
-    number that is the area of the annotation geodataframe divided by the
-    number of geometries in the annotation geodataframe.
+    number that is the number of geometries in the annotation geodataframe
+    divided by area of the annotation geodataframe.
 
     Args:
         annotation (geodataframe): A geodataframe of annotations.
@@ -106,7 +106,7 @@ def density_estimate_number_area(
         average_storeys (int): The average number of storeys of buildings in the annotation geodataframe. If None, will not calculate the average number of storeys using the meta data. Defaults to None.
 
     Returns:
-        density (float): The area of the annotation geodataframe divided by the number of geometries in the annotation geodataframe.
+        density (float): The number of geometries in the annotation geodataframe divided by the area of the annotation geodataframe.
     """
 
     if crs is None:
@@ -160,8 +160,8 @@ def density_estimate_area_area(
 ) -> float:
     """This function will get the area of annotation geodataframe, and also get
     the number of geometries in the annotation geodataframe, and return a
-    number that is the area of the annotation geodataframe divided by the
-    number of geometries in the annotation geodataframe.
+    number that is the total area of geometries in the annotation geodataframe
+    divided by the area of the annotation geodataframe.
 
     Args:
         annotation (geodataframe): A geodataframe of annotations.
@@ -169,7 +169,7 @@ def density_estimate_area_area(
         average_storeys (int): The average number of storeys of buildings in the annotation geodataframe. If None, will not calculate the average number of storeys using the meta data. Defaults to None.
 
     Returns:
-        density (float): The area of the annotation geodataframe divided by the number of geometries in the annotation geodataframe.
+        density (float): The area of geometries in the annotation geodataframe divided by the area of annotation.
     """
     if crs is None:
         try:
