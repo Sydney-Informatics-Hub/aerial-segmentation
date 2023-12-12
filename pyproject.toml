@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aerial_segmentation"
+authors = [
+    {name = "Henry Lydecker", email = "henry.lydecker@sydney.edu.au"},
+    {name = "Sahand Vahidnia", email = "sahand.vahidnia@sydney.edu.au"},
+    {name = "Xinwei Luo", email = "xinwei.luo@sydney.edu.au"},
+    {name = "Thomas Mauch", email = "thomas.mauch@sydney.edu.au"},
+]
+description = "Utilities for fine-tuning detectron2 models and inference of them on aerial imagery"
+readme = "README.md"
+version = "0.1.1"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+requires-python = ">=3.7"
+dynamic = ["dependencies"]
+
+[project.urls]
+"Homepage" = "https://github.com/Sydney-Informatics-Hub/aerial-segmentation"
+"Bug Tracker" = "https://github.com/Sydney-Informatics-Hub/aerial-segmentation/issues"
+
+[project.scripts]
+benchmark_aerialseg = "aerial_segmentation.scripts.benchmark:main"
+fine_tuning_detectron2 = "aerial_segmentation.scripts.fine_tuning_detectron2:main"
+fine_tuning_detectron2_from_roboflow = "aerial_segmentation.scripts.fine_tuning_detectron2_from_roboflow:main"
+prediction_batch_detectron2 = "aerial_segmentation.scripts.prediction_batch_detectron2:main"
+prediction_detectron2 = "aerial_segmentation.scripts.prediction_detectron2:main"
+prediction_raster_detectron2 = "aerial_segmentation.scripts.prediction_raster_detectron2:main"
+
+[tool.setuptools]
+packages = ["aerialseg", "aerialseg.scripts"]
+
+[tool.setuptools.package-dir]
+aerialseg = "aerialseg"
+"aerialseg.scripts" = "scripts"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.isort]
+profile = "black"
