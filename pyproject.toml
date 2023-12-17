@@ -25,12 +25,12 @@ dynamic = ["dependencies"]
 "Bug Tracker" = "https://github.com/Sydney-Informatics-Hub/aerial-segmentation/issues"
 
 [project.scripts]
-benchmark_aerialseg = "aerial_segmentation.scripts.benchmark:main"
-fine_tuning_detectron2 = "aerial_segmentation.scripts.fine_tuning_detectron2:main"
-fine_tuning_detectron2_from_roboflow = "aerial_segmentation.scripts.fine_tuning_detectron2_from_roboflow:main"
-prediction_batch_detectron2 = "aerial_segmentation.scripts.prediction_batch_detectron2:main"
-prediction_detectron2 = "aerial_segmentation.scripts.prediction_detectron2:main"
-prediction_raster_detectron2 = "aerial_segmentation.scripts.prediction_raster_detectron2:main"
+benchmark_aerialseg = "aerialseg.scripts.benchmark:main"
+fine_tuning_detectron2 = "aerialseg.scripts.fine_tuning_detectron2:main"
+fine_tuning_detectron2_from_roboflow = "aerialseg.scripts.fine_tuning_detectron2_from_roboflow:main"
+prediction_batch_detectron2 = "aerialseg.scripts.prediction_batch_detectron2:main"
+prediction_detectron2 = "aerialseg.scripts.prediction_detectron2:main"
+prediction_raster_detectron2 = "aerialseg.scripts.prediction_raster_detectron2:main"
 
 [tool.setuptools]
 packages = ["aerialseg", "aerialseg.scripts"]
