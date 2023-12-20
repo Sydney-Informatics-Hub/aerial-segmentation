@@ -12,7 +12,7 @@ conda create -n aerial-segmentation python==3.9
 
 conda activate aerial-segmentation
 
-pip install -r requirements.txt
+pip install 'git+https://github.com/Sydney-Informatics-Hub/aerial-segmentation.git'
 
 pip install 'git+https://github.com/facebookresearch/detectron2.git'
 ```
@@ -107,13 +107,13 @@ python cocosplit.py -s 0.667 /path/to/test_valid.json /path/to/save/output/test.
 ```
 
 
-#### 4. Run the fine tuning script `scripts/fine_tuning_detectron2.py`
+#### 4. Run the fine tuning script `fine_tuning_detectron2`
 
-Run `python scripts/fine_tuning_detectron2.py -h` to display the help message that describes all the available command-line options and arguments for model fine tuning.
+Run `fine_tuning_detectron2 -h` to display the help message that describes all the available command-line options and arguments for model fine tuning.
 
 Example usage:
 ```
-python scripts/fine_tuning_detectron2.py \
+fine_tuning_detectron2 \
 --train-json /path/to/train.json \
 --test-json /path/to/test.json \
 --eval-json /path/to/valid.json --evaluate-model \
@@ -131,35 +131,35 @@ The following code snippet can be used to predict on a directory of tiles (batch
 
 
 ```bash
-python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
+prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
 
 ```
 
 For getting the minimum rotated rectangles in tile level, you can use the following script:
 
 ```bash
-python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
+prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
 
 ```
 
-For more information about the script, you may run:
+For more information about the batch script, you may run:
 
 ```bash
-python -m scripts.prediction_batch_detectron2  --help
+prediction_batch_detectron2  --help
 
 ```
 
 For prediction and visualisation on a single image, you can use the following script:
 
 ```bash
-python -m scripts.prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
+prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
 
 ```
 
-For more information about the script, you may run:
+For more information about the single image script, you may run:
 
 ```bash
-python -m scripts.prediction_detectron2  --help
+prediction_detectron2  --help
 
 ```
 
@@ -167,7 +167,7 @@ For prediction and yielding a COCO JSON from a raster, you can use the following
 
 ```bash
 
-python -m scripts.prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json" --temp-dir "path/to/tile/storage/" --simplify-tolerance 0.95
+prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json" --temp-dir "path/to/tile/storage/" --simplify-tolerance 0.95
 
 ```
 
