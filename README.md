@@ -171,6 +171,25 @@ python -m scripts.prediction_raster_detectron2 --raster-file "path/to/raster.tif
 
 ```
 
+### Density Estimation and Mapping
+
+The repository also contains a script for density estimation. The script can be used as follows:
+
+```bash
+python -m scripts.density_map --input-path /path/to/annotation.geojson --average-storeys 1 --footprint-ratio 0.5 --tile-size 200 --area-unit utm
+
+```
+
+Where: 
+
+- `input-path` is the path to the geojson file containing the annotations, 
+- `average-storeys` is the average number of storeys in the buildings. If None is given, the script will look for the `storeys` property in the geojson file (or any column that has been specified in the `storeys-column` argument), 
+- `footprint-ratio` the ratio of area-based density to number-based density. The script calculates density in two ways: area-based and number-based. The area-based density is calculated by dividing the area of the building by the area of the tile. The number-based density is calculated by dividing the number of buildings in the tile by the area of the tile. The area-based density is then multiplied by the `footprint-ratio` and the number-based density is multiplied by `1 - footprint-ratio`. The default value is 0.5,
+- `tile-size` is the size of the tile in pixels for making a map. This basically acts as the resolution parameter, and 
+- `area-unit` is the unit of the area of the building. The area unit can be either `utm` or `meter`. `meter` will use `3857` as the EPSG code, while `utm` will use the UTM zone of the centroid of the building. The default value is `utm` for better accuracy.
+
+
+
 
 ## Contributing to the Project
 
