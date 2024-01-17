@@ -63,6 +63,7 @@ def main(args=None):
     weights_file = args.weights
     cfg.merge_from_file(config_file)
     cfg.MODEL.WEIGHTS = weights_file
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.threshold
 
     meta = MetadataCatalog.get("predict")
     # If we have the COCO JSON then we can set up the class names for the prediction.

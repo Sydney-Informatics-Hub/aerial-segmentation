@@ -5,68 +5,50 @@ import os
 
 import wandb
 from detectron2 import model_zoo
-from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog, build_detection_test_loader
 from detectron2.data.datasets import load_coco_json, register_coco_instances
 from detectron2.engine import DefaultPredictor, DefaultTrainer
-from detectron2.engine.hooks import BestCheckpointer
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.utils.logger import setup_logger
+from roboflow import Roboflow
 
 setup_logger()
 
 
-class Trainer(DefaultTrainer):
-    @classmethod
-    def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-        return COCOEvaluator(dataset_name)
-
-    def build_hooks(self):
-        cfg = self.cfg.clone()
-        ret = super().build_hooks()
-        ret.append(
-            BestCheckpointer(
-                eval_period=1,
-                checkpointer=DetectionCheckpointer(self.model, cfg.OUTPUT_DIR),
-                val_metric="mask_rcnn/accuracy",
-            )
-        )
-        return ret
-
-
 def create_parser():
     parser = argparse.ArgumentParser(
-        description="Fine-tune Detectron2 weights from COCO dataset."
+        description="Fine-tune Detectron2 weights using annotated Roboflow dataset."
     )
-    parser.add_argument(
-        "--dataset-name", type=str, required=True, help="Root dataset name."
-    )
-    parser.add_argument(
-        "--train-json", type=str, required=True, help="Training COCO JSON."
-    )
-    parser.add_argument(
-        "--test-json", type=str, required=True, help="Testing COCO JSON."
-    )
-    parser.add_argument(
-        "--eval-json",
+    roboflow_group = parser.add_argument_group("Roboflow options")
+    roboflow_group.add_argument(
+        "--workspace",
+        "-w",
         type=str,
-        default=None,
-        help="Evaluation COCO JSON (Default: Use test)",
+        help="Roboflow workspace name.",
+        required=True,
     )
-    parser.add_argument(
-        "--image-root",
+    roboflow_group.add_argument(
+        "--project",
+        "-p",
         type=str,
-        help="Root path of the images references in the Train and test COCO JSON.",
+        help="Roboflow project name.",
+        required=True,
+    )
+    roboflow_group.add_argument(
+        "--project-version",
+        type=int,
+        default=0,
+        help="Roboflow project version number to download. (Default: Highest available).",
+    )
+    roboflow_group.add_argument(
+        "--roboflow-api-key", "-a", type=str, help="Roboflow API key.", required=True
     )
     wandb_group = parser.add_argument_group("Weights & Biases options")
     wandb_group.add_argument(
         "--use-wandb",
         action="store_true",
         help="Initialise Weights & Biases (wandb) for this run.",
-    )
-    wandb_group.add_argument(
-        "--wandb-key", type=str, default=None, help="Wandb API key."
     )
     wandb_group.add_argument(
         "--wandb-project",
@@ -124,27 +106,79 @@ def create_parser():
     return parser
 
 
-def register_coco_json(name: str, json_file: str, image_root: str):
-    """Register a COCO JSON format file for Detectron2 instance detection.
+def get_roboflow_dataset(
+    api_key: str, workspace: str, project: str, version_number: int = 0
+):
+    """Download a dataset from the Roboflow server.
+
+    Parameters
+    ----------
+    api_key : str
+        A Roboflow API key required to access the data.
+    workspace : str
+        Roboflow workspace name.
+    project : str
+        Roboflow project name.
+    version_number : int, optional
+        The version number of the Roboflow project.
+        Values < 1 mean find the highest available version.
+
+    Returns
+    -------
+    :class:`Dataset`
+        A Dataset instance pointing to the data downloaded from Roboflow
+    """
+
+    # This script only supports 'coco-segmentation' format.
+    # I'm making it explicit here in case we generalise it in future.
+    roboflow_dataset_format = "coco-segmentation"
+
+    rf = Roboflow(api_key=api_key)
+    project = rf.workspace(workspace).project(project)
+    version_list = project.versions()
+    all_versions = [os.path.basename(version.id) for version in version_list]
+    # if version_number is 0 get the highest available otherwise
+    # try to pick the specified version
+    if version_number < 1:
+        version_number = max(all_versions)
+    version = project.version(version_number)
+    dataset = version.download(roboflow_dataset_format)
+    return dataset
+
+
+def register_coco_json_from_roboflow(
+    name: str, location: str, instance_type: str = "train"
+):
+    """Register a COCO JSON format file obtained from Roboflow for Detectron2
+    instance detection.
 
     Parameters
     ----------
     name : str
-        The name of the dataset.
-    json_file : str
-        Path to the COCO JSON file.
-    image_root : str, optional
-        The path to the root directory of the images referenced in the COCO JSON.
+        The name of the dataset obtained from Roboflow.
+    location : str
+        The root path of the dataset downloaded from Roboflow.
+    instance_type : str, optional
+        The instance type to register, defaults to 'train'.
+        It is assumed the COCO JSON and related images are contained in
+        the sub-directory `instance_type` of `location`.
 
     Returns
     -------
     str
         The name of the registered instance - which can be used by Detectron2.
     """
-    register_coco_instances(name, {}, json_file, image_root)
+    # Roboflow always saves its COCO annotation file in the dir containing the
+    # images with this filename.
+    roboflow_coco_json_filename = "_annotations.coco.json"
+
+    instance_name = name + "_" + instance_type
+    image_root = os.path.join(location, instance_type)
+    coco_json_file = os.path.join(location, instance_type, roboflow_coco_json_filename)
+    register_coco_instances(instance_name, {}, coco_json_file, image_root)
     # Load the json to populate the `thing_classes` list in the Metdata
-    _ = load_coco_json(json_file, image_root, name)
-    return name
+    _ = load_coco_json(coco_json_file, image_root, instance_name)
+    return instance_name
 
 
 def setup_detectron_config(
@@ -230,13 +264,21 @@ def main(args=None):
         wandb.init(
             project=args.wandb_project, entity=args.wandb_entity, sync_tensorboard=True
         )
-    dataset_name = args.dataset_name
-    # Register the train and test datasets with detectron2
-    train_dataset = register_coco_json(
-        f"{dataset_name}_train", args.train_json, args.image_root
+
+    # Download the roboflow dataset and register it in detectron2
+    dataset = get_roboflow_dataset(
+        args.roboflow_api_key,
+        args.workspace,
+        args.project,
+        version_number=args.project_version,
     )
-    test_dataset = register_coco_json(
-        f"{dataset_name}_test", args.test_json, args.image_root
+
+    # Register the train and test datasets with detectron2
+    train_dataset = register_coco_json_from_roboflow(
+        dataset.name, dataset.location, instance_type="train"
+    )
+    test_dataset = register_coco_json_from_roboflow(
+        dataset.name, dataset.location, instance_type="test"
     )
 
     # Setup Detectron2 configuration from user supplied args and derive some
@@ -256,7 +298,7 @@ def main(args=None):
     # Fine-tune the model and put output weights in cfg.OUTPUT_DIR
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     cfg.MODEL.DEVICE = args.device
-    trainer = Trainer(cfg)
+    trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
     trainer.train()
 
@@ -266,9 +308,8 @@ def main(args=None):
 
     # Evaluate the model if requested
     if args.evaluate_model:
-        eval_json = args.eval_json if args.eval_json else args.test_json
-        val_dataset = register_coco_json(
-            f"{dataset_name}_valid", eval_json, args.image_root
+        val_dataset = register_coco_json_from_roboflow(
+            dataset.name, dataset.location, instance_type="valid"
         )
         cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
@@ -278,7 +319,7 @@ def main(args=None):
         inference_on_dataset(predictor.model, val_loader, evaluator)
 
     # Save the config YAML to output directoryß
-    with open(os.path.join(cfg.OUTPUT_DIR, f"{dataset_name}_cfg.yaml"), "w") as f:
+    with open(os.path.join(cfg.OUTPUT_DIR, f"{dataset.name}_cfg.yaml"), "w") as f:
         f.write(cfg.dump())
 
 

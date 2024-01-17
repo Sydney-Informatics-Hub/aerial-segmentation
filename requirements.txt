@@ -1,11 +1,12 @@
-pre-commit
-roboflow
-torch
-torchvision
-wandb
 opencv-python
 pillow
-tqdm
+pre-commit
+roboflow
 Sphinx
 sphinx_rtd_theme
+torch
+torchvision
+tqdm
+wandb
 
+aerial_conversion@git+https://github.com/Sydney-Informatics-Hub/aerial-conversion.git

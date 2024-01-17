@@ -1,5 +1,6 @@
 # aerial-segmentation
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/SIH/building-segmentation)
+
 Open source aerial imagery segmentation model fine tuning, evaluation, and prediction tools. Part of https://github.com/Sydney-Informatics-Hub/PIPE-3956-aerial-segmentation
 
 ## Setup
@@ -11,7 +12,7 @@ conda create -n aerial-segmentation python==3.9
 
 conda activate aerial-segmentation
 
-pip install -r requirements.txt
+pip install 'git+https://github.com/Sydney-Informatics-Hub/aerial-segmentation.git'
 
 pip install 'git+https://github.com/facebookresearch/detectron2.git'
 ```
@@ -74,7 +75,55 @@ cfg.DATASETS.TEST = (f"{dataset_name}_test",)
 
 ### Fine-tuning
 
-TBC
+Run on RONIN with a defined COCO JSON dataset in subdirectories.
+
+```{bash}
+conda create -n training python=3.9
+conda activate training
+```
+
+#### 1. Get raster & geojson annotations using aerial annotation
+Refer to examples in [aerial-annotation](https://github.com/Sydney-Informatics-Hub/aerial-annotation) for what the data needs to look like, e.g. directory structure of raster and annotation files.
+
+#### 2. Convert the geojson annotations into COCO JSON files, and concatenate the converted COCO JSONs into one file using aerial conversion
+
+Refer to examples in [aerial-conversion](https://github.com/Sydney-Informatics-Hub/aerial-conversion) for how to convert and concatenate geojson files into one COCO JSON file.
+
+
+#### 3. Split the concatenated COCO JSON into train and test (and valid) using cocosplit.
+
+Example usage to split into train (70%), test (20%) and valid (10%) data sets:
+```
+git clone https://github.com/akarazniewicz/cocosplit
+
+# Modify requirements.txt to replace sklearn with scikit-learn for python3.9
+pip install -r requirements.txt
+
+cd cocosplit
+
+python cocosplit.py -s 0.7 /path/to/concatenated_coco.json /path/to/save/output/train.json /path/to/save/output/test_valid.json
+
+python cocosplit.py -s 0.667 /path/to/test_valid.json /path/to/save/output/test.json /path/to/save/output/valid.json
+```
+
+
+#### 4. Run the fine tuning script `fine_tuning_detectron2`
+
+Run `fine_tuning_detectron2 -h` to display the help message that describes all the available command-line options and arguments for model fine tuning.
+
+Example usage:
+```
+fine_tuning_detectron2 \
+--train-json /path/to/train.json \
+--test-json /path/to/test.json \
+--eval-json /path/to/valid.json --evaluate-model \
+--image-root path/to/rasters/ \
+--max-iter=20000 --batch-size=8 --device=cuda \
+--dataset-name=my_dataset \
+--output-dir path/to/save/model/output/ \
+--use-wandb --wandb-key samplekey5d6f65e625c
+```
+
 
 ### Prediction
 
@@ -82,37 +131,65 @@ The following code snippet can be used to predict on a directory of tiles (batch
 
 
 ```bash
-python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
+prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --simplify-tolerance 0.3  --threshold 0.7 --force-cpu 
 
 ```
 
 For getting the minimum rotated rectangles in tile level, you can use the following script:
 
 ```bash
-python -m scripts.prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
+prediction_batch_detectron2 -i "path/to/tiles" -c "path/to/config.yml" -w "path/to/weights/model.pth" --coco "path/to/coco.json" --minimum-rotated-rectangle --threshold 0.7 --force-cpu 
 
 ```
 
-For more information about the script, you may run:
+For more information about the batch script, you may run:
 
 ```bash
-python -m scripts.prediction_batch_detectron2  --help
+prediction_batch_detectron2  --help
 
 ```
 
 For prediction and visualisation on a single image, you can use the following script:
 
 ```bash
-python -m scripts.prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
+prediction_detectron2 --image "path/to/image" --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco "path/to/coco.json"
 
 ```
 
-For more information about the script, you may run:
+For more information about the single image script, you may run:
 
 ```bash
-python -m scripts.prediction_detectron2  --help
+prediction_detectron2  --help
 
 ```
+
+For prediction and yielding a COCO JSON from a raster, you can use the following script:
+
+```bash
+
+prediction_raster_detectron2 --raster-file "path/to/raster.tif"  --tile-size 0.002 --config "path/to/config.yml" --weights "path/to/weights/model.pth" --threshold 0.7 --coco-out "path/to/output/coco.json" --temp-dir "path/to/tile/storage/" --simplify-tolerance 0.95
+
+```
+
+### Density Estimation and Mapping
+
+The repository also contains a script for density estimation. The script can be used as follows:
+
+```bash
+python -m scripts.density_map --input-path /path/to/annotation.geojson --average-storeys 1 --footprint-ratio 0.5 --tile-size 200 --area-unit utm
+
+```
+
+Where: 
+
+- `input-path` is the path to the geojson file containing the annotations, 
+- `average-storeys` is the average number of storeys in the buildings. If None is given, the script will look for the `storeys` property in the geojson file (or any column that has been specified in the `storeys-column` argument), 
+- `footprint-ratio` the ratio of area-based density to number-based density. The script calculates density in two ways: area-based and number-based. The area-based density is calculated by dividing the area of the building by the area of the tile. The number-based density is calculated by dividing the number of buildings in the tile by the area of the tile. The area-based density is then multiplied by the `footprint-ratio` and the number-based density is multiplied by `1 - footprint-ratio`. The default value is 0.5,
+- `tile-size` is the size of the tile in pixels for making a map. This basically acts as the resolution parameter, and 
+- `area-unit` is the unit of the area of the building. The area unit can be either `utm` or `meter`. `meter` will use `3857` as the EPSG code, while `utm` will use the UTM zone of the centroid of the building. The default value is `utm` for better accuracy.
+
+
+
 
 ## Contributing to the Project
 
