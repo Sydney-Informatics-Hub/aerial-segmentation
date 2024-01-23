@@ -5,6 +5,27 @@ Open source aerial imagery segmentation model fine tuning, evaluation, and predi
 
 ## Setup
 
+### System Prep
+
+Before installing detectron2, we should make sure our system has the following requirements installed
+
+- g++ needs to be installed for detectron2: `sudo apt-get install g++`
+- Install cv2 requirements: `sudo apt-get update && apt-get install ffmpeg libsm6 libxext6 -y`
+- Finally, make sure NVIDIA drivers are installed, follow instructions [here](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#ubuntu-lts). This has been tested for tesla T4 GPUs. Note: no need to run post installation steps in case CUDA is installed on your conda env. 
+
+Full example:
+
+```bash
+sudo apt-get install g++
+sudo apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
+sudo apt-get install linux-headers-$(uname -r)
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-drivers
+```
+
 ### Local (or interactive VM)
 
 ```bash
