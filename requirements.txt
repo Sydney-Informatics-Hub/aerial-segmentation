@@ -1,3 +1,8 @@
+matplotlib
+netron
+numpy
+onnx
+onnxruntime
 opencv-python
 pillow
 pre-commit
