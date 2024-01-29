@@ -179,3 +179,4 @@ output/model_ts_IR.txt
 output/model_ts_IR_inlined.txt
 wandb/
 
+demo_data/concatenated_coco.json
