@@ -4,12 +4,11 @@
 import argparse
 import json
 
-import cv2
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
-from detectron2.utils.visualizer import Visualizer
-from matplotlib import pylab as plt
+
+from aerialseg.utils import visualize_or_save_image
 
 
 def create_parser():
@@ -64,33 +63,24 @@ def main(args=None):
     weights_file = args.weights
     cfg.merge_from_file(config_file)
     cfg.MODEL.WEIGHTS = weights_file
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.threshold
 
+    meta = MetadataCatalog.get("predict")
     # If we have the COCO JSON then we can set up the class names for the prediction.
     if args.coco is not None:
         with open(args.coco, "r") as f:
             coco = json.load(f)
         categories = coco["categories"]
         thing_classes = [c["name"] for c in categories]
-        meta = MetadataCatalog.get("predict")
         meta.thing_classes = thing_classes
 
     # Just need the CPU for a single image
     cfg.MODEL.DEVICE = "cpu"
     predictor = DefaultPredictor(cfg)
 
-    im = cv2.imread(args.image)
-    # Could serialise the outputs to a file
-    outputs = predictor(im)
-    v = Visualizer(im[:, :, ::-1], metadata=MetadataCatalog.get("predict"))
-    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-
-    plt.figure(figsize=(8, 8), tight_layout=True)
-    plt.imshow(out.get_image())
-    plt.axis("off")
-    if args.png_out:
-        plt.savefig(args.png_out)
-    else:
-        plt.show()
+    visualize_or_save_image(
+        image=args.image, predictor=predictor, meta=meta, png_out=args.png_out
+    )
 
 
 if __name__ == "__main__":
