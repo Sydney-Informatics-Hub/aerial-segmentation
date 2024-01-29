@@ -7,15 +7,17 @@ import numpy as np
 import pandas as pd
 import supervision as sv
 from aerial_conversion import coco
-from detectron2.utils.visualizer import Visualizer
 from matplotlib import pylab as plt
 from PIL import Image
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
+from detectron2.utils.visualizer import Visualizer
+
 """
 Plotting and visualisation utilities
 """
+
 
 def save_images_as_gif(input_folder, output_gif_path, duration=100):
     """Save a folder of images as an animated GIF.
@@ -55,25 +57,24 @@ def save_images_as_gif(input_folder, output_gif_path, duration=100):
 
 
 def plot_polygons(polygons):
+    # Reshape the coordinates to separate x and y values
+    olygons = [np.array(polygons[i]).reshape(-1, 2) for i in range(len(polygons))]
 
-  # Reshape the coordinates to separate x and y values
-  olygons = [np.array(polygons[i]).reshape(-1, 2) for i in range(len(polygons))]
+    # Create a plot
+    fig, ax = plt.subplots()
 
-  # Create a plot
-  fig, ax = plt.subplots()
+    # Plot each polygon
+    for polygon in polygons:
+        ax.plot(polygon[:, 0], polygon[:, 1], marker="o", linestyle="-")
 
-  # Plot each polygon
-  for polygon in polygons:
-      ax.plot(polygon[:, 0], polygon[:, 1], marker='o', linestyle='-')
+    # Set labels and title
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.set_title("Polygon Predictions")
+    plt.gca().invert_yaxis()
 
-  # Set labels and title
-  ax.set_xlabel('X-axis')
-  ax.set_ylabel('Y-axis')
-  ax.set_title('Polygon Predictions')
-  plt.gca().invert_yaxis()
-
-  # Show the plot
-  plt.show()
+    # Show the plot
+    plt.show()
 
 
 def polygon_prep(

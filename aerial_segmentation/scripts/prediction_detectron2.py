@@ -4,11 +4,10 @@
 import argparse
 import json
 
+from aerialseg.utils import visualize_or_save_image
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
-
-from aerialseg.utils import visualize_or_save_image
 
 
 def create_parser():

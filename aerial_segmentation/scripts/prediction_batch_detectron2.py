@@ -4,24 +4,13 @@
 import argparse
 import glob
 import json
-import logging
 import os
 
-# import geopandas as gpd
-import rasterio as rio
-from aerial_conversion.coco import raster_to_coco
-from aerial_conversion.tiles import save_tiles
+from aerialseg.utils import assemble_coco_json, extract_all_annotations_df
 from detectron2.config import get_cfg
 
 # from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
-
-from aerialseg.utils import assemble_coco_json, extract_all_annotations_df
-
-# import traceback
-
-
-log = logging.getLogger(__name__)
 
 
 def create_parser():
@@ -29,24 +18,18 @@ def create_parser():
         description="Run Detectron2 prediction on aerial imagery and show image with results."
     )
     parser.add_argument(
-        "--raster-file",
-        "-r",
+        "--indir",
+        "-i",
         type=str,
-        help="Path to a raster file. Will split the raster into tiles and run prediction on each tile, before merging them back. ",
+        required=True,
+        help="Path to a directory containing the input images.",
     )
     parser.add_argument(
-        "--tile-size",
-        "-z",
-        type=float,
-        default=1000,
-        help="Tile size in degrees. Default: %(default)s.",
-    )
-    parser.add_argument(
-        "--overlap",
-        "-l",
-        type=int,
-        default=10,
-        help="Overlap size in percent. Default: %(default)s.",
+        "--in-pattern",
+        "-p",
+        type=str,
+        default="*.png",
+        help="Glob pattern to match the input images. Default: %(default)s.",
     )
     parser.add_argument(
         "--config",
@@ -101,13 +84,6 @@ def create_parser():
         default=None,
         help="Path to a COCO JSON file to save the predictions to. By default will save to the same directory as the input image with 'coco-out.json' name.",
     )
-    parser.add_argument(
-        "--temp-dir",
-        "-d",
-        type=str,
-        default=None,
-        help="Path to a temporary directory to store the raster tiles. By default will use the system temp directory.",
-    )
 
     return parser
 
@@ -124,47 +100,9 @@ def main(args=None):
     parser = create_parser()
     args = parser.parse_args()
 
-    raster_path = args.raster_file
-    tile_size = args.tile_size
     config_file = args.config
     weights_file = args.weights
-    offset = args.overlap
 
-    # Create a temporary directory to store the raster tiles.
-    if args.temp_dir is None:
-        out_path = os.path.join(".", ".tmp", "tiles")
-
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-
-    # Preapare raster and tiles
-    log.info(f"Creating {tile_size} m*m tiles from {raster_path}")
-
-    # Read input files
-    geotiff = rio.open(raster_path)
-
-    # Create raster tiles
-    save_tiles(
-        geotiff, out_path, tile_size, tile_template="tile_{}-{}.tif", offset=offset
-    )
-    geotiff.close()
-
-    # Read the created raster tiles into a list.
-    raster_file_list = []
-    for filename in glob.iglob(os.path.join(f"{out_path}", "*.tif")):
-        raster_file_list.append(filename)
-
-    log.info(f"{len(raster_file_list)} raster tiles created")
-
-    # Make png images from the tiles
-    images = []
-    for filename in raster_file_list:
-        raster_to_coco(filename, 0, "png")
-        images.append(filename.replace(".tif", ".png"))
-
-    log.info(f"{len(images)} png tiles created")
-
-    # Prepare model
     cfg = get_cfg()
     cfg.merge_from_file(config_file)
     cfg.MODEL.WEIGHTS = weights_file
@@ -185,6 +123,8 @@ def main(args=None):
     else:
         categories_keyed = None
 
+    # scan the input directory for images based on the pattern given
+    images = glob.glob(os.path.join(args.indir, args.in_pattern))
     assert (
         len(images) > 0
     ), f"No images found in the input directory given the pattern {args.in_pattern}."

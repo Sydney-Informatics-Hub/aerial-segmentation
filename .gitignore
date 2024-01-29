@@ -159,24 +159,25 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-notebooks/gis-hd-200x200-3/
-notebooks/output/
-notebooks/wandb/
+aerial_segmentation/notebooks/gis-hd-200x200-3/
+aerial_segmentation/notebooks/output/
+aerial_segmentation/notebooks/wandb/
+aerial_segmentation/.DS_Store
+aerial_segmentation/weights/chatswood_buildings_poc.pth
+
+aerial_segmentation/weights/*
 .DS_Store
-weights/chatswood_buildings_poc.pth
+aerial_segmentation/output_data/*
+aerial_segmentation/detectron2/*
+aerial_segmentation/detectron2
+aerial_segmentation/urban-small-2/*
+aerial_segmentation/demo_data/*
 
-weights/*
-.DS_Store
-output_data/*
-detectron2/*
-detectron2
-urban-small-2/*
+aerial_segmentation/output/model.ts
+aerial_segmentation/output/model.txt
+aerial_segmentation/output/model_ts_code.txt
+aerial_segmentation/output/model_ts_IR.txt
+aerial_segmentation/output/model_ts_IR_inlined.txt
+aerial_segmentation/wandb/
 
-output/model.ts
-output/model.txt
-output/model_ts_code.txt
-output/model_ts_IR.txt
-output/model_ts_IR_inlined.txt
-wandb/
-
-demo_data/concatenated_coco.json
+aerial_segmentation/demo_data/concatenated_coco.json

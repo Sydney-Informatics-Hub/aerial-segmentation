@@ -4,6 +4,7 @@ import argparse
 import os
 
 import wandb
+
 from detectron2 import model_zoo
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg

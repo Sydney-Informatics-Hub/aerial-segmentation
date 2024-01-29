@@ -7,6 +7,7 @@ from aerialseg.utils import extract_output_annotations
 def test_output_dims():
     """Test extract_output_annotations function."""
     import cv2
+
     from detectron2.config import get_cfg
     from detectron2.engine import DefaultPredictor
 

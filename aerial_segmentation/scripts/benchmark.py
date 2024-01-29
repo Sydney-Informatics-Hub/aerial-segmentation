@@ -11,10 +11,11 @@ import time
 
 import cv2
 import numpy as np
+from PIL import Image
+
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 from detectron2.utils.visualizer import ColorMode, Visualizer
-from PIL import Image
 
 
 def parse_arguments():

@@ -4,6 +4,8 @@ import argparse
 import os
 
 import wandb
+from roboflow import Roboflow
+
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog, build_detection_test_loader
@@ -11,7 +13,6 @@ from detectron2.data.datasets import load_coco_json, register_coco_instances
 from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.utils.logger import setup_logger
-from roboflow import Roboflow
 
 setup_logger()
 
