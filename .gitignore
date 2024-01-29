@@ -158,8 +158,24 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+notebooks/gis-hd-200x200-3/
+notebooks/output/
+notebooks/wandb/
+.DS_Store
+weights/chatswood_buildings_poc.pth
+
 weights/*
 .DS_Store
 output_data/*
 detectron2/*
 detectron2
+urban-small-2/*
+
+output/model.ts
+output/model.txt
+output/model_ts_code.txt
+output/model_ts_IR.txt
+output/model_ts_IR_inlined.txt
+wandb/
+

@@ -3,8 +3,15 @@ netron
 numpy
 onnx
 onnxruntime
+opencv-python
+pillow
 pre-commit
 roboflow
+Sphinx
+sphinx_rtd_theme
 torch
 torchvision
+tqdm
 wandb
+
+aerial_conversion@git+https://github.com/Sydney-Informatics-Hub/aerial-conversion.git
