@@ -37,7 +37,8 @@ def storey_averager(annotation, storey_column="storeys"):
             pass
     try:
         average_storeys = annotation_d[storey_column].mean()
-    except KeyError:
+    # UnboundLocalError or KeyErrror
+    except (KeyError, UnboundLocalError):
         average_storeys = 1
         logger.warning(
             "No storeys column found in the annotation geodataframe. Will assume that all buildings have 1 storey."
